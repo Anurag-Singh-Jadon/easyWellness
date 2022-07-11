@@ -9,18 +9,23 @@ import LinearGradient from 'react-native-linear-gradient';
 import ImagePicker from 'react-native-image-crop-picker';
 import Modal from "react-native-modal";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 
 const CustomSidebarMenu = (props) => {
 
   const [getValue, setGetValue] = useState('');
-  console.log("getvalue data" + getValue)
+  // console.log("getvalue data" + getValue)
   const [isModalVisible, setModalVisible] = useState(false);
-  const [image, setImage] = useState('https://api.adorable.io/avatars/80/abott@adorable.png');
+  const [image, setImage] = useState('');
+  const isFocused = useIsFocused();
+  const [getKeyVAlue, setKeyVAlue] = useState('')
+
   useEffect(() => {
     getValueFunction();
 
 
-  }, []);
+
+  }, [isFocused]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -49,24 +54,30 @@ const CustomSidebarMenu = (props) => {
       // this.bs.current.snapTo(1);
     });
   }
-  const getValueFunction = () => {
+  const getValueFunction = async () => {
     // Function to get the value from AsyncStorage
     try {
-      AsyncStorage.getItem('any_key_here').then(
+      AsyncStorage.getItem('First_Name').then(
         (value) =>
-          // AsyncStorage returns a promise
-          // Adding a callback to get the value
-          setGetValue(value),
-        // Setting the value in Text
 
-        //   alert(getValue);
-        console.log("first value=====" + getValue)
+          setGetValue(value),
+
       );
+      await AsyncStorage.getItem('tokenkeyValue').then(
+        (ky) =>
+          setKeyVAlue(ky),
+        console.log('get key value-------', getKeyVAlue)
+      )
     } catch (error) {
       console.log(error)
     }
   };
+  const LogOutFun = () => {
 
+
+    AsyncStorage.clear();
+    props.navigation.navigate('Login')
+  }
 
 
 
@@ -74,6 +85,11 @@ const CustomSidebarMenu = (props) => {
   let lastGroupName = '';
   let newGroup = true;
 
+  const ProfilePicSet = () => {
+    if (image) {
+      setModalVisible(false);
+    }
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -96,35 +112,40 @@ const CustomSidebarMenu = (props) => {
                     <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#B2F3FF', '#0489D6']} style={styles.linearGradient}>
                       <View style={styles.sectionContainer}>
                         <View style={{ width: wp('75.5%'), marginTop: -hp('1%'), }}>
-                          <TouchableOpacity style={{ height: hp('4.5%'), width: wp('6.6%'), alignSelf: 'flex-end', justifyContent: 'center', marginRight: hp('5%') }}>
+                          <TouchableOpacity style={{ height: hp('4.5%'), width: wp('6.6%'), alignSelf: 'flex-end', justifyContent: 'center', marginRight: hp('5%') }} onPress={() => props.navigation.navigate('EditProfile')} >
                             <FontAwesome name='edit' size={wp('5.5%')} />
                           </TouchableOpacity>
 
 
                           <TouchableOpacity
                             style={{
-                              height: wp('18%'),
-                              width: wp('18%'),
+                              height: wp('20%'),
+                              width: wp('20%'),
                               borderRadius: hp('5%'),
                               justifyContent: 'center',
                               alignItems: 'center',
-                              marginLeft: wp('25%'),
-                              backgroundColor: 'black',
-                              marginTop: hp('3%')
+                              // marginLeft: wp('25%'),
+                              // backgroundColor: 'red',
+                              marginTop: hp('3%'),
+                              alignSelf: 'center'
                             }} onPress={toggleModal}>
-                            <ImageBackground
-                              source={{
-                                uri: image,
-                              }}
-                              style={{ height: 100, width: 100 }}
-                              imageStyle={{ borderRadius: hp('100%'), }}>
-                              <View
-                                style={{
-                                  flex: 1,
-                                  justifyContent: 'center',
-                                  alignItems: 'center',
-                                }}>
-                                {/* <MaterialCommunityIcons
+                            {image == '' ?
+
+                              <Image source={require('./Source/Assets/Images/men1.png')} style={{ width: hp('10%'), height: hp('10%'), borderRadius: hp('10%'), }} />
+                              :
+                              <ImageBackground
+                                source={{
+                                  uri: image,
+                                }}
+                                style={{ height: 100, width: 100, }}
+                                imageStyle={{ borderRadius: hp('100%'), }}>
+                                <View
+                                  style={{
+                                    flex: 1,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                  }}>
+                                  {/* <MaterialCommunityIcons
                                     name="camera"
                                     size={35}
                                     color="#fff"
@@ -137,23 +158,21 @@ const CustomSidebarMenu = (props) => {
                                         borderRadius: 10,
                                     }}
                                 /> */}
-                              </View>
-                            </ImageBackground>
+                                </View>
+                              </ImageBackground>
+                            }
                           </TouchableOpacity>
-
-
-                          <Text style={styles.title2}>{getValue}</Text>
-
+                          <View style={{ height: hp('7%'), justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: hp('2%') }}>{getValue}</Text>
+                          </View>
                         </View>
 
                       </View>
                     </LinearGradient>
-
                     <View>
                       <View style={{ backgroundColor: "#f2f2f2", marginTop: hp('2%') }}>
                         <Text style={styles.Dtitle}>ADD FAMILY MEMBERS</Text></View>
                       <TouchableOpacity onPress={() => props.navigation.navigate('AddFamilyMember')}>
-
                         <Text style={styles.DsubTitle}> <FontAwesome5Icon name='user-plus' size={15} style={{ marginRight: wp('2%') }} />  Add a Member</Text>
                       </TouchableOpacity>
                       <View style={{ backgroundColor: "#f2f2f2", height: hp('5%') }}>
@@ -205,7 +224,7 @@ const CustomSidebarMenu = (props) => {
                       <TouchableOpacity onPress={() => props.navigation.navigate('Settings')}>
                         <Text style={styles.DsubTitle}><FontAwesome5Icon name='cog' size={15} style={{ marginRight: wp('2%') }} />  Settings</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => props.navigation.navigate('Login')} style={{ backgroundColor: '#f2f6fc', height: hp('6%'), justifyContent: 'center' }}>
+                      <TouchableOpacity onPress={LogOutFun} style={{ backgroundColor: '#f2f6fc', height: hp('6%'), justifyContent: 'center' }}>
                         <Text style={{ fontSize: 16, fontStyle: "bold", fontWeight: 'bold', marginTop: hp('1%'), height: hp('4%'), marginLeft: wp('4%'), color: '#0489D6' }}><Feather name='log-out' size={18} style={{ marginRight: wp('2%') }} />Logout</Text>
                       </TouchableOpacity>
                     </View>
@@ -241,27 +260,21 @@ const CustomSidebarMenu = (props) => {
         onBackdropPress={() => setModalVisible(false)}
         onSwipeComplete={() => setModalVisible(false)}
         swipeDirection={['down']}
-
         avoidKeyboard={true}
         useNativeDriver={true}
         style={{ alignSelf: 'center', }}
       >
-
         <View style={{ width: wp('100%'), height: hp('50%'), alignItems: 'center', marginTop: hp('50%'), borderTopLeftRadius: hp('4%'), borderTopRightRadius: hp('4%'), backgroundColor: 'white' }}>
           <View style={{ justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'gray', width: wp('30%'), borderRadius: hp('1.5%'), marginTop: hp('2%'), }}></View>
           <View style={{ width: wp('100%'), height: hp('14%'), marginTop: hp('5%'), padding: wp('2.5%'), }}>
             <Text style={{ fontSize: hp('2.5%'), fontWeight: 'bold', color: 'black', marginBottom: hp('1%'), paddingLeft: wp('1%') }}>Upload Photo</Text>
-
           </View>
-
-
           <View style={{ width: wp('100%'), height: hp('9%'), alignItems: 'center', justifyContent: 'center' }}>
             <TouchableOpacity onPress={TakePhotoFromCamera}
               style={{ width: wp('80%'), height: hp('7%'), backgroundColor: '#2581d4', borderRadius: hp('1.5%'), justifyContent: 'center', alignItems: 'center', }}
             >
               <Text style={styles.textStyle}>Take Photo From Camera</Text>
             </TouchableOpacity>
-
             <TouchableOpacity onPress={ChoosePhotoFromGalery}
               style={{ width: wp('80%'), height: hp('7%'), backgroundColor: '#2581d4', borderRadius: hp('1.5%'), justifyContent: 'center', alignItems: 'center', marginTop: 12 }}
             >
@@ -314,7 +327,7 @@ const styles = StyleSheet.create({
     marginBottom: hp('3%'),
     justifyContent: 'center',
     //alignSelf: 'center',
-    marginLeft: wp('29%'),
+    marginLeft: wp('25%'),
   },
 });
 

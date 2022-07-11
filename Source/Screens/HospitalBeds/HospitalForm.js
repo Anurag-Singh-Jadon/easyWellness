@@ -1,4 +1,4 @@
-import { LogBox, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, Platform, PermissionsAndroid, Modal, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { LogBox, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, Platform, PermissionsAndroid, BackHandler } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Colors from '../../Assets/Constants/Colors';
@@ -9,27 +9,29 @@ import CheckBox from '@react-native-community/checkbox';
 import DatePicker from 'react-native-datepicker';
 import { Picker } from '@react-native-picker/picker';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Modal from "react-native-modal";
 import {
     launchCamera,
     launchImageLibrary
 } from 'react-native-image-picker';
-import { Formik } from 'formik';
-import * as yup from 'yup';
 import DocumentPicker from 'react-native-document-picker';
-// import Colors from '../../Assets/Constants/Colors';
-//import { globalStyles } from './screens/styles/globals';
 import { baseurl } from '../../Config/baseurl';
 import axios from 'axios';
-const userHospitalFormReg = 'https://ehospifinallyapp.herokuapp.com/hospitalForm'
+
+const userHospitalFormReg = baseurl + 'user/bookBed/'
 
 const HospitalForm = (props) => {
     const [patientName, setPatientName] = useState('');
     const [addFamilyMember, setAddFamilyMember] = useState('');
+    // const [dob, setDob] = useState('');
     const [selectedGender, setSelectedGender] = useState("");
     const [fName, setFName] = useState('');
     const [address, setAddress] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
     const [email, setEmail] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    // const [message, setMessage] = useState('');
     const [nationality, setNationality] = useState('');
     const [religion, setReligion] = useState('');
     const [mincome, setMincome] = useState('');
@@ -45,11 +47,42 @@ const HospitalForm = (props) => {
     const [getHospitalCode, setHospitalCode] = useState('');
     const [getValue, setGetValue] = useState('');
     const [date, setDate] = useState('');
+    const [modalVisible2, setModalVisible2] = useState(false);
+
     const [modalVisible, setModalVisible] = useState(false);
     // CheckBox
     const [toggleCheckBox, setToggleCheckBox] = useState(false)
     const [singleFile, setSingleFile] = useState('');
     const [filePath, setFilePath] = useState({});
+    const [gettotalCharges, settotalCharges] = useState('');
+    const [getDate, setGetDate] = useState('');
+    const [getTime, setGetTime] = useState('');
+    const [getFormate, setGetFormate] = useState('');
+    const [getWard, setWard] = useState('');
+    const [thankYou, setThankYou] = useState(false);
+    const [payment, setPayment] = useState(false);
+    const [hjkhdjasdas, setjkhjkdhsjks] = useState('')
+    const [getTokenId, setTokenId] = useState();
+
+    useEffect(() => {
+        LogBox.ignoreLogs(['Animated: `useNativeDriver`', 'componentWillReceiveProps']);
+        GetBookBedData();
+        // getBookinDetails();
+    }, [getTokenId])
+
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
+
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
+
     const selectOneFile = async () => {
         //Opening Document Picker for selection of one file
         try {
@@ -83,28 +116,41 @@ const HospitalForm = (props) => {
             }
         }
     };
-
-
-    useEffect(() => {
-        LogBox.ignoreLogs(['Animated: `useNativeDriver`', 'componentWillReceiveProps']);
-    }, [])
-      const GetBookBedData = () => {
+    const GetBookBedData = async () => {
         AsyncStorage.getItem('Ward').then(
             (value) =>
-
                 setWard(value),
-
         );
         AsyncStorage.getItem('Hname').then(
             (hname) =>
-
                 setGetValue(hname),
-                    );
+        );
         AsyncStorage.getItem('Hcode').then(
             (code) =>
-
                 setHospitalCode(code),
         );
+        AsyncStorage.getItem('TotalCharges').then(
+            (value) =>
+                settotalCharges(value),
+        );
+        AsyncStorage.getItem('date').then(
+            (value) =>
+                setGetDate(value),
+        );
+        AsyncStorage.getItem('timing').then(
+            (value) =>
+                setGetTime(value),
+            // console.log('getTime======',getTime)
+        );
+        AsyncStorage.getItem('formate').then(
+            (formate) =>
+                setGetFormate(formate),
+        );
+        await AsyncStorage.getItem('tokenId').then(
+            (token) =>
+                //   setGetValue(Hname),
+                setTokenId(token)
+        )
     }
     const requestCameraPermission = async () => {
         if (Platform.OS === 'android') {
@@ -218,6 +264,8 @@ const HospitalForm = (props) => {
     };
 
     const validForm = () => {
+
+
         const emailRegex = /\S+@\S+\.\S+/;
         const reg = /^[6-9]{1}[0-9]{9}$/;
         const rule = /^[a-zA-Z ]{2,40}$/;
@@ -303,552 +351,398 @@ const HospitalForm = (props) => {
         }
 
     };
-    const userProfileData = () => {
 
+    const getBookinDetails = () => {
+        console.log('get booking Details========')
+        axios.get(baseurl + 'user/findBookings/', { headers: { "Authorization": `Bearer ${getTokenId}` } })
+            .then(response => {
+                const p = response.data.length - 1;
+                console.log("sdfghj", response.data[p])
+                console.log(response.data[p].bookingId);
+                setjkhjkdhsjks(response.data[p])
+            })
+    }
+    //    const xsdfgdf =getDetailsOfBooking
+    // console.log('xsdfgdf----------',hjkhdjasdas.bookingId)
+    // console.log('get data=========',hjkhdjasdas.bookingDate)
+    const userProfileData = () => {
+        console.log('get data=========', getDate)
         const userData = {
-            patientName: (patientName),
-            familyMember: (addFamilyMember),
-            dob: (date),
-            gender: (selectedGender),
-            fatherHusbandName: (fName),
-            address: (address),
-            phone: (mobileNumber),
-            email: (email),
-            nationality: (nationality),
-            religion: (religion),
-            monthlyIncome: (mincome),
-            occupation: (occupation),
-            altPhone: (altContactNo),
-            doctorName: (dName),
-            policyNumber: (policyNo),
-            employerName: (empName),
-            employerId: (empId)
+            // bookingId: "123456",
+            hospitalCode: getHospitalCode,
+            bedType: getWard,
+            bedPrice: gettotalCharges,
+            bookingDate: getDate,
+            bookingTime: getTime + '' + getFormate,
+            paymentStatus: "pending",
+            patientName: patientName,
+            familyMember: addFamilyMember,
+            dob: date,
+            gender: selectedGender,
+            fatherHusbandName: fName,
+            address: address,
+            phone: mobileNumber,
+            email: email,
+            nationality: nationality,
+            religion: religion,
+            monthlyIncome: (Number(mincome)),
+            occupation: occupation,
+            altPhone: altContactNo,
+            doctorName: dName,
+            policyNumber: policyNo,
+            employerName: empName,
+            employerId: empId
+
         }
         console.log(userData);
         console.log('Api called');
-        axios.post(userHospitalFormReg, userData)
+        setIsLoading(true);
+        axios.post(baseurl + 'user/bookBed/', userData, { headers: { "Authorization": `Bearer ${getTokenId}` } })
             .then((response) => {
                 console.log('data is coming');
                 console.log(response.data);
-                props.navigation.navigate('SemiPrivateRoom')
-                if (response.data.status === "Registered sucessfully") {
-                    alert("profile data submitted  successful")
-                    props.navigation.navigate('SemiPrivateRoom')
+                //  props.navigation.navigate('SemiPrivateRoom')
+                if (response.data.message === "Registered sucessfull") {
+                    // alert("profile data submitted  successful")
+                    setThankYou(!thankYou)
+                    getBookinDetails();
                 }
-                else if (response.data.status === "Profile already created") {
+                else if (response.data.message === "Profile already created") {
                     alert("user is alredy register");
-
                 }
                 else {
                     console.log("Error Occured")
                 }
-            })
+            }).finally(() => setIsLoading(false));
     }
-
-    const schema = yup.object().shape({
-        patientName: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Patient Name is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Name should be in this format"
-            ),
-        familyMemberName: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Family Member Name is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Name should be in this format"
-            ),
-        fatherName: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Father/Husband Name is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Name should be in this format"
-            ),
-        occupation: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Occupation is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Occupation should be in this format"
-            ),
-        doctorName: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Doctor Name is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Name should be in this format"
-            ),
-        EmployerName: yup.string()
-            .min(4, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Employer Name is required')
-            .matches(
-                "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z])$",
-                "Name should be in this format"
-            ),
-        email: yup.string().email('Please enter valid email').required('Email id is required'),
-        mobileno: yup.string()
-            .min(10, ({ min }) => `Mobile No. must contain ${min} digit`).required('Mobile No. is required'),
-        altContactno: yup.string()
-            .min(10, ({ min }) => `Mobile No. must contain ${min} digit`).required('Alt. Mobile No. is required'),
-        monthlyIncome: yup.string()
-            .min(5, ({ min }) => `Monthly Income is required`).required('Monthly Income is required'),
-
-        address: yup.string()
-            .min(10, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Address is required'),
-        policyNo: yup.string()
-            .min(10, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Policy No. is required'),
-        employerId: yup.string()
-            .min(10, 'Too Short!')
-            .max(50, 'Too Long!')
-            .required('Employer Id is required')
-    });
     return (
         <SafeAreaView>
-            <Formik
-                initialValues={{ patientName: '', familyMemberName: '', fatherName: '', email: '', altContactno: '', mobileno: '', EmployerName: '', monthlyIncome: '', occupation: '', doctorName: '', address: '', policyNo: '', employerId: '', }}
-                validateOnMount={true}
-                onSubmit={values => console.log(values)}
-                validationSchema={schema}
-            >
-                {({ handleChange, handleBlur, handleSubmit, values, touched, errors, isValid, setFieldValue }) => (
-                    < View style={styles.container}>
-                             <View style={{ height: hp('7%'), width: wp('100%'), justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={styles.header}>Hospital Form</Text>
-                        </View>
-                        <View style={styles.inputContainer}>
-                            <Text style={{ fontSize: hp('2.5%'), fontWeight: "normal", marginLeft: wp('1.5%') }}>Patient Details</Text>
-                            <KeyboardAvoidingView
-                                behavior="height"
-                                enabled
-                                style={{ width: wp('100%'), height: hp('84%'), }}
-                            >
-                                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                                    <View style={{ height: hp('84%') }}>
-                                        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" >
-                                            <View style={styles.pname}>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt1}
-                                                        placeholder='Patient Name'
-                                                        // value={patientName}
-                                                        // onChangeText={text => setPatientName(text)}
-                                                        autoCapitalize="none"
-                                                        onChangeText={handleChange('patientName')}
-                                                        onBlur={handleBlur('patientName')}
-                                                        value={values.patientName}
-                                                    />
-                                                    {errors.patientName &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.patientName}</Text>
-                                                    }
-                                                </View>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt2}
-                                                        placeholder='Add Family Member'
-                                                        // value={addFamilyMember}
-                                                        // onChangeText={text => setAddFamilyMember(text)}
-                                                        autoCapitalize="none"
-                                                        onChangeText={handleChange('familyMemberName')}
-                                                        onBlur={handleBlur('familyMemberName')}
-                                                        value={values.familyMemberName}
-                                                    />
-                                                    {errors.familyMemberName &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.familyMemberName}</Text>
-                                                    }
-                                                </View>
-                                            </View>
-                                            <View style={styles.dob}>
-                                                <View>
-                                                    <DatePicker
-                                                        style={styles.inputTxt3}
-                                                        date={date} // Initial date from state
-                                                        mode="date" // The enum of date,
-                                                        placeholder="MM-DD-YYYY"
-                                                        iconComponent={
-                                                            <FontAwesome5 name='calendar-alt' color='#a9a9a9' size={hp('3%')} />
-                                                        }
-                                                        format="MM-DD-YYYY"
-                                                        minDate="01-01-1900"
-                                                        maxDate="01-19-2050"
-                                                        // display='spinner'
-                                                        customStyles={{
-                                                            dateInput: { borderWidth: 0, alignItems: 'flex-start', paddingLeft: wp('1%'), fontSize: hp('1.5%') },
-                                                            dateText: { fontSize: hp('1.8%'), color: 'black' },
-                                                            placeholderText: {
-                                                                color: 'black',
-                                                                fontSize: hp('1.5%')
-                                                            }
-                                                        }}
-                                                        confirmBtnText="Confirm"
-                                                        cancelBtnText="Cancel"
-                                                        // display='scroll'
-                                                        onDateChange={(date) => {
-                                                            setDate(date);
-                                                        }}
-                                                        androidMode={'spinner'}
-                                                    />
-                                                    {date == '' ?
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>Select your Date of Birth</Text>
-                                                        : null}
-                                                </View>
-                                                <View>
-                                                    <Picker
-                                                        style={styles.inputTxt4}
-                                                        selectedValue={selectedGender}
-                                                        onValueChange={(itemValue, itemIndex) => setSelectedGender(itemValue)}
-                                                    >
-                                                        <Picker.Item label="Gender" value="Gender" style={{ fontSize: hp('1.8%') }} />
-                                                        <Picker.Item label="Male" value="Male" style={{ fontSize: hp('1.8%'), }} />
-                                                        <Picker.Item label="Female" value="Female" style={{ fontSize: hp('1.8%'), }} />
-                                                        <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%'), }} />
-                                                    </Picker>
-                                                    {selectedGender == '' ?
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>Select Gender</Text>
-                                                        : null}
-                                                </View>
-                                            </View>
-                                            <View style={styles.fname}>
-                                                <TextInput style={styles.inputTxt5}
-                                                    placeholder='Father/Husband Name'
-                                                    autoCapitalize="none"
-                                                    onChangeText={handleChange('fatherName')}
-                                                    onBlur={handleBlur('fatherName')}
-                                                    value={values.fatherName}
-                                                />
-                                                {errors.fatherName &&
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.fatherName}</Text>
-                                                }
-                                                <TextInput style={styles.inputTxt5}
-                                                    placeholder='Address'
-                                                    autoCapitalize="none"
-                                                    onChangeText={handleChange('address')}
-                                                    onBlur={handleBlur('address')}
-                                                    value={values.address}
-                                                />
-                                                {errors.address &&
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.address}</Text>
-                                                }
-                                            </View>
-                                            <View style={styles.contact}>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt6}
-                                                        placeholder='Mobile No.'
-                                                        keyboardType='numeric'
-                                                        maxLength={10}
-                                                        // value={mobileNumber}
-                                                        // onChangeText={text => setMobileNumber(text)}
-                                                        // keyboardType='number-pad'
-                                                        value={values.mobileno}
-                                                        onChangeText={handleChange('mobileno')}
-                                                        onBlur={handleBlur('mobileno')}
-                                                    />
-                                                    {errors.mobileno &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.mobileno}</Text>
-                                                    }
-                                                </View>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt7}
-                                                        placeholder='Email'
-
-                                                        // value={email}
-                                                        // onChangeText={(email) => setEmail(email)}
-                                                        keyboardType='email-address'
-                                                        onChangeText={handleChange('email')}
-                                                        onBlur={handleBlur('email')}
-                                                        value={values.email}
-                                                    />
-                                                    {errors.email &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.email}</Text>
-                                                    }
-                                                </View>
-                                            </View>
-                                            <View style={styles.india}>
-                                                <View
-                                                    style={{
-                                                        borderRadius: hp('12%')
-                                                    }}>
-                                                    <Picker
-                                                        style={styles.inputTxt8}
-                                                        selectedValue={nationality}
-                                                        onValueChange={(itemValue, itemIndex) => setNationality(itemValue)}
-                                                    >
-                                                        <Picker.Item label="Nationality" value="nationality" style={{ fontSize: hp('1.8%') }} />
-                                                        <Picker.Item label="Indian" value="indian" style={{ fontSize: hp('1.8%') }} />
-                                                        <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%') }} />
-                                                    </Picker>
-                                                    {nationality == '' ?
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>Select your Nationality</Text>
-                                                        : null}
-                                                </View>
-                                                <View>
-                                                    <Picker
-                                                        style={styles.inputTxt9}
-                                                        selectedValue={religion}
-                                                        onValueChange={(itemValue, itemIndex) => setReligion(itemValue)}
-                                                    >
-                                                        <Picker.Item label="Religion" value="religion" style={{ fontSize: hp('1.8%') }} />
-                                                        <Picker.Item label="Hindu" value="hindu" style={{ fontSize: hp('1.8%') }} />
-                                                        <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%') }} />
-                                                    </Picker>
-                                                    {religion == '' ?
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>Select your Religion</Text>
-                                                        : null}
-                                                </View>
-                                            </View>
-                                            <View style={styles.income}>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt10}
-                                                        placeholder='Monthly Income'
-                                                        // value={mincome}
-                                                        // onChangeText={text => setMincome(text)}
-                                                        value={values.monthlyIncome}
-                                                        onChangeText={handleChange('monthlyIncome')}
-                                                        onBlur={handleBlur('monthlyIncome')}
-                                                    />
-                                                    {errors.monthlyIncome &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.monthlyIncome}</Text>
-                                                    }
-                                                </View>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt11}
-                                                        placeholder='Occupation'
-                                                        // value={occupation}
-                                                        // onChangeText={text => setOccupation(text)}
-                                                        autoCapitalize="none"
-                                                        onChangeText={handleChange('occupation')}
-                                                        onBlur={handleBlur('occupation')}
-                                                        value={values.occupation}
-                                                    />
-                                                    {errors.occupation &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.occupation}</Text>
-                                                    }
-                                                </View>
-
-                                            </View>
-                                            <View style={styles.alt}>
-                                                <TextInput style={styles.inputTxt12}
-                                                    placeholder='Alt. Contact No.'
-                                                    keyboardType='numeric'
-                                                    maxLength={10}
-                                                    // value={altContactNo}
-                                                    // onChangeText={text => setAltContactNo(text)}
-                                                    value={values.altContactno}
-                                                    onChangeText={handleChange('altContactno')}
-                                                    onBlur={handleBlur('altContactno')}
-                                                />
-                                                {errors.altContactno &&
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.altContactno}</Text>
-                                                }
-                                                <TextInput style={styles.inputTxt12}
-                                                    placeholder='Doctor Name'
-                                                    // value={dName}
-                                                    // onChangeText={text => setDName(text)}
-                                                    autoCapitalize="none"
-                                                    onChangeText={handleChange('doctorName')}
-                                                    onBlur={handleBlur('doctorName')}
-                                                    value={values.doctorName}
-                                                />
-                                                {errors.doctorName &&
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.doctorName}</Text>
-                                                }
-
-                                            </View>
-                                            <View style={styles.upload}>
-                                                <View style={{ width: wp('47%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', alignItems: 'center', marginTop: wp('2%'), borderRadius: hp('2%') }}>
-                                                    <TextInput style={styles.inputTxt13}
-                                                        placeholder='Upload Prescription'
-                                                        value={uploadP}
-                                                        onChangeText={text => setUploadP(text)}
-                                                    />
-                                                    <TouchableOpacity onPress={selectOneFile}>
-                                                        <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                                <View style={{ width: wp('42%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', alignItems: 'center', marginTop: wp('2%'), borderRadius: hp('2%'), marginRight: wp('2.5%') }}>
-                                                    <TextInput style={styles.inputTxt14}
-                                                        placeholder='Upload ID Proof'
-                                                        value={uploadId}
-                                                        onChangeText={text => setUploadId(text)}
-                                                    />
-                                                    <TouchableOpacity onPress={() => setModalVisible(true)}>
-                                                        <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
-
-                                            <Text style={{ fontSize: hp('2.5%'), fontWeight: "normal", marginTop: wp('1%'), marginLeft: wp('2%') }}>Insurance Claim </Text>
-
-                                            <View style={styles.policy}>
-                                                <View style={{ width: wp('92%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', borderRadius: hp('2%'), }}>
-                                                    <TextInput style={styles.inputTxt20}
-                                                        placeholder='Medical Insurance'
-                                                        value={minsurance}
-                                                        onChangeText={text => setMinsurance(text)}
-                                                    />
-                                                    <TouchableOpacity style={{ width: wp('12%'), height: hp('7%'), justifyContent: 'center', alignItems: 'flex-end', paddingRight: wp('1%') }} onPress={selectOneFile}>
-                                                        <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                                <TextInput style={styles.inputTxt15}
-                                                    placeholder='Policy No.'
-                                                    autoCapitalize="none"
-                                                    onChangeText={handleChange('policyNo')}
-                                                    onBlur={handleBlur('policyNo')}
-                                                    value={values.policyNo}
-                                                />
-                                                {errors.policyNo &&
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.policyNo}</Text>
-                                                }
-
-                                            </View>
-
-                                            <View style={styles.employer}>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt16}
-                                                        placeholder='Employer Name'
-                                                        // value={empName}
-                                                        // onChangeText={text => setEmpName(text)}
-                                                        autoCapitalize="none"
-                                                        onChangeText={handleChange('EmployerName')}
-                                                        onBlur={handleBlur('EmployerName')}
-                                                        value={values.EmployerName}
-                                                    />
-                                                    {errors.EmployerName &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.EmployerName}</Text>
-                                                    }
-                                                </View>
-                                                <View>
-                                                    <TextInput style={styles.inputTxt17}
-                                                        placeholder='Employer ID'
-                                                        // value={empId}
-                                                        // onChangeText={text => setEmpId(text)}
-                                                        autoCapitalize="none"
-                                                        onChangeText={handleChange('employerId')}
-                                                        onBlur={handleBlur('employerId')}
-                                                        value={values.employerId}
-                                                    />
-                                                    {errors.employerId &&
-                                                        <Text style={{ fontSize: hp('1.5%'), color: 'red', marginLeft: hp('1%') }}>{errors.employerId}</Text>
-                                                    }
-                                                </View>
-                                            </View>
-                                            <SafeAreaView style={styles.termsCondition}>
-
-                                                <CheckBox
-                                                    disabled={false}
-                                                    value={toggleCheckBox}
-                                                    tintColors={{ true: '#2581d4', false: '' }}
-                                                    onValueChange={(newValue) => setToggleCheckBox(newValue)}
-
-                                                />
-
-                                                <Text style={{ fontSize: hp('1.8%') }}>Read the </Text>
-                                                <TouchableOpacity>
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'blue', textDecorationLine: 'underline', }}>Terms </Text>
-                                                </TouchableOpacity>
-                                                <Text> <Text>{'&'}</Text> </Text>
-                                                <TouchableOpacity>
-                                                    <Text style={{ fontSize: hp('1.5%'), color: 'blue', textDecorationLine: 'underline', }}> Conditions </Text>
-                                                </TouchableOpacity>
-                                            </SafeAreaView>
-
-                                            <TouchableOpacity style={styles.btn}
-                                                //  onPress={userProfileData}
-                                                // onPress={()=>{validForm();userProfileData()}}
-                                                // onPress = {() =>  props.navigation.navigate('SemiPrivateRoom')}
-                                                 //onPress={()=>}
-                                                onPress={() => {
-                                                    if (!isValid) {
-                                                        handleSubmit();
-                                                        alert('Validiate your form')
-                                                    }
-                                                    else if (!toggleCheckBox) {
-                                                        alert('Tick the checkbox')
-                                                    }
-                                                    else {
-                                                        handleSubmit();
-                                                        props.navigation.navigate('SemiPrivateRoom')
-                                                        alert('Form submitted')
-                                                    }
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontSize: hp('2.5%') }}>Submit</Text>
-                                            </TouchableOpacity>
-
-                                        </ScrollView>
-                                    </View>
-                                </TouchableWithoutFeedback>
-                            </KeyboardAvoidingView>
-                        </View>
-
-                        <Modal
-                            animationType="slide"
-                            transparent={true}
-                            visible={modalVisible}
-                            onRequestClose={() => {
-                                Alert.alert("Modal has been closed.");
-                                setModalVisible(!modalVisible);
-                            }}
-                        ><View style={styles.centeredView}>
-
-                                <View style={styles.modalView}>
-                                    <TouchableOpacity style={{ width: wp('90%'), height: hp('7%'), alignSelf: 'center', alignItems: 'flex-end', justifyContent: 'center', paddingRight: wp('2%') }} onPress={() => setModalVisible(!modalVisible)}>
-                                        <FontAwesome5 name='times' size={hp('2.5%')} color={Colors.black} />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity style={{ flexDirection: 'row', alignSelf: 'flex-start', width: wp('92%'), height: hp('7%'), paddingLeft: wp('2%'), alignItems: 'center', marginTop: hp('1%') }} onPress={() => captureImage('photo')}>
-                                        <FontAwesome5 name='camera' color='blue' size={hp('3%')} />
-                                        <Text style={{ marginLeft: wp('2%') }}>Camera</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={{ flexDirection: 'row', alignSelf: 'flex-start', width: wp('92%'), height: hp('7%'), paddingLeft: wp('2%'), alignItems: 'center', marginTop: hp('1%') }} onPress={() => chooseFile('photo')}>
-                                        <FontAwesome5 name='photo-video' color='blue' size={hp('3%')} />
-                                        <Text style={{ marginLeft: wp('2%') }}>Photo and Video Library</Text>
-                                    </TouchableOpacity>
-                                    {/* <CustomButton
-                                onPress={() => props.navigation.navigate('DrawerNavigator')}
-                                title={'DONE'}
-                                bgColor={Colors.blue}
-                                width={wp('75%')}
-                                height={hp('7%')}
-                                color={Colors.white}
-                                fontSize={hp('2.5%')}
-                                alignSelf={'center'}
-                                padding={hp('8%')}
-                                borderRadius={hp('2%')}
-                                marginTop={hp('3%')}
+            < View style={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.header}>Hospital Form</Text>
+                </View>
+                <View style={styles.inputContainer}>
+                    <Text style={{ fontSize: hp('2.5%'), fontWeight: "normal", marginLeft: wp('1.5%') }}>Patient Details</Text>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <View style={styles.pname}>
+                            <TextInput style={styles.inputTxt1}
+                                placeholder='Patient Name'
+                                value={patientName}
+                                onChangeText={text => setPatientName(text)}
                             />
-                            <TouchableOpacity style={{ marginTop: hp('1%') }}>
-                                <Text style={{ alignSelf: 'center', color: Colors.blue, }}> <Text style={{ fontWeight: 'bold' }}></Text> Edit Your Appointment</Text>
-                            </TouchableOpacity> */}
-                                    {/* <Pressable
-                            style={[styles.button, styles.buttonClose]}
-                            onPress={() => setModalVisible(!modalVisible)}
-                        >
-                            <Text style={styles.textStyle}>Hide Modal</Text>
-                        </Pressable> */}
-                                </View>
+                            <TextInput style={styles.inputTxt2}
+                                placeholder='Add Family Member'
+                                value={addFamilyMember}
+                                onChangeText={text => setAddFamilyMember(text)}
+                            />
+                        </View>
+                        <View style={styles.dob}>
+                            <DatePicker
+                                style={styles.inputTxt3}
+                                date={date} // Initial date from state
+                                mode="date" // The enum of date,
+                                placeholder="DOB"
+                                iconComponent={
+                                    <FontAwesome5 name='calendar-alt' color='#a9a9a9' size={hp('3%')} />
+                                }
+                                format="MM-DD-YYYY"
+                                minDate="01-01-1900"
+                                maxDate="01-19-2050"
+                                // display='spinner'
+                                customStyles={{
+                                    dateInput: { borderWidth: 0, alignItems: 'flex-start', paddingLeft: wp('1%'), fontSize: hp('1.5%') },
+                                    dateText: { fontSize: hp('1.8%'), color: 'black' },
+                                    placeholderText: {
+                                        color: 'black',
+                                        fontSize: hp('1.5%')
+                                    }
+                                }}
+                                confirmBtnText="Confirm"
+                                cancelBtnText="Cancel"
+                                // display='scroll'
+                                onDateChange={(date) => {
+                                    setDate(date);
+                                }}
+                                androidMode={'spinner'}
+                            />
+                            <Picker
+                                style={styles.inputTxt4}
+                                selectedValue={selectedGender}
+                                onValueChange={(itemValue, itemIndex) => setSelectedGender(itemValue)}
+                            >
+                                <Picker.Item label="Gender" value="Gender" style={{ fontSize: hp('1.8%') }} />
+                                <Picker.Item label="Male" value="Male" style={{ fontSize: hp('1.8%'), }} />
+                                <Picker.Item label="Female" value="Female" style={{ fontSize: hp('1.8%'), }} />
+                                <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%'), }} />
+                            </Picker>
+                        </View>
+                        <View style={styles.fname}>
+                            <TextInput style={styles.inputTxt5}
+                                placeholder='Father/Husband Name'
+                                value={fName}
+                                onChangeText={text => setFName(text)}
+                            />
+                            <TextInput style={styles.inputTxt5}
+                                placeholder='Address'
+                                value={address}
+                                onChangeText={text => setAddress(text)}
+                            />
+                        </View>
+                        <View style={styles.contact}>
+                            <TextInput style={styles.inputTxt6}
+                                placeholder='Mobile No.'
+                                keyboardType='numeric'
+                                maxLength={10}
+                                value={mobileNumber}
+                                onChangeText={text => setMobileNumber(text)}
+                            />
+                            <TextInput style={styles.inputTxt7}
+                                placeholder='Email'
+                                value={email}
+                                onChangeText={(email) => setEmail(email)}
+                            />
+                        </View>
+                        <View style={styles.india}>
+                            <View
+                                style={{
+                                    borderRadius: hp('12%')
+                                }}>
+                                <Picker
+                                    style={styles.inputTxt8}
+                                    selectedValue={nationality}
+                                    onValueChange={(itemValue, itemIndex) => setNationality(itemValue)}
+                                >
+                                    <Picker.Item label="Nationality" value="nationality" style={{ fontSize: hp('1.8%') }} />
+                                    <Picker.Item label="Indian" value="indian" style={{ fontSize: hp('1.8%') }} />
+                                    <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%') }} />
+                                </Picker>
                             </View>
-                        </Modal>
+                            <Picker
+                                style={styles.inputTxt9}
+                                selectedValue={religion}
+                                onValueChange={(itemValue, itemIndex) => setReligion(itemValue)}
+                            >
+                                <Picker.Item label="Religion" value="religion" style={{ fontSize: hp('1.8%') }} />
+                                <Picker.Item label="Hindu" value="hindu" style={{ fontSize: hp('1.8%') }} />
+                                <Picker.Item label="Other" value="Other" style={{ fontSize: hp('1.8%') }} />
+                            </Picker>
+                        </View>
+                        <View style={styles.income}>
+                            <TextInput style={styles.inputTxt10}
+                                placeholder='Monthly Income'
+                                value={mincome}
+                                onChangeText={text => setMincome(text)}
+                            />
+                            <TextInput style={styles.inputTxt11}
+                                placeholder='Occupation'
+                                value={occupation}
+                                onChangeText={text => setOccupation(text)}
+                            />
+                        </View>
+                        <View style={styles.alt}>
+                            <TextInput style={styles.inputTxt12}
+                                placeholder='Alt. Contact No.'
+                                keyboardType='numeric'
+                                maxLength={10}
+                                value={altContactNo}
+                                onChangeText={text => setAltContactNo(text)}
+                            />
+                            <TextInput style={styles.inputTxt12}
+                                placeholder='Doctor Name'
+                                value={dName}
+                                onChangeText={text => setDName(text)}
+                            />
+                        </View>
+                        <View style={styles.upload}>
+                            <View style={{ width: wp('47%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', alignItems: 'center', marginTop: wp('2%'), borderRadius: hp('2%') }}>
+                                <TextInput style={styles.inputTxt13}
+                                    placeholder='Upload Prescription'
+                                    value={uploadP}
+                                    onChangeText={text => setUploadP(text)}
+                                />
+                                <TouchableOpacity onPress={selectOneFile}>
+                                    <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={{ width: wp('42%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', alignItems: 'center', marginTop: wp('2%'), borderRadius: hp('2%'), marginRight: wp('2.5%') }}>
+                                <TextInput style={styles.inputTxt14}
+                                    placeholder='Upload ID Proof'
+                                    value={uploadId}
+                                    onChangeText={text => setUploadId(text)}
+                                />
+                                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                                    <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        <Text style={{ fontSize: hp('2.5%'), fontWeight: "normal", marginTop: wp('1%'), marginLeft: wp('2%') }}>Insurance Claim </Text>
+                        <View style={styles.policy}>
+                            <View style={{ width: wp('92%'), height: hp('7%'), backgroundColor: '#d3d3d3', flexDirection: 'row', borderRadius: hp('2%'), }}>
+                                <TextInput style={styles.inputTxt20}
+                                    placeholder='Medical Insurance'
+                                    value={minsurance}
+                                    onChangeText={text => setMinsurance(text)}
+                                />
+                                <TouchableOpacity style={{ width: wp('12%'), height: hp('7%'), justifyContent: 'center', alignItems: 'flex-end', paddingRight: wp('1%') }} onPress={selectOneFile}>
+                                    <FontAwesome5 name='plus-circle' color='#2581d4' size={hp('3%')} />
+                                </TouchableOpacity>
+                            </View>
+                            <TextInput style={styles.inputTxt15}
+                                placeholder='Policy No.'
+                                value={policyNo}
+                                onChangeText={text => setPolicyNo(text)}
+                            />
+                        </View>
+                        <View style={styles.employer}>
+                            <TextInput style={styles.inputTxt16}
+                                placeholder='Employer Name'
+                                value={empName}
+                                onChangeText={text => setEmpName(text)}
+                            />
+                            <TextInput style={styles.inputTxt17}
+                                placeholder='Employer ID'
+                                value={empId}
+                                onChangeText={text => setEmpId(text)}
+                            />
+                        </View>
+                        <SafeAreaView style={styles.termsCondition}>
+                            <CheckBox
+                                disabled={false}
+                                value={toggleCheckBox}
+                                tintColors={{ true: '#2581d4', false: '' }}
+                                onValueChange={(newValue) => setToggleCheckBox(newValue)}
+                            />
+                            <Text style={{ fontSize: hp('1.8%') }}>Read the </Text>
+                            <TouchableOpacity>
+                                <Text style={{ fontSize: hp('1.5%'), color: '#2581d4', textDecorationLine: 'underline', }}>Terms </Text>
+                            </TouchableOpacity>
+                            <Text> <Text>{'&'}</Text> </Text>
+                            <TouchableOpacity>
+                                <Text style={{ fontSize: hp('1.5%'), color: '#2581d4', textDecorationLine: 'underline', }}> Conditions </Text>
+                            </TouchableOpacity>
+                        </SafeAreaView>
+                        {isLoading ? (
+                            <ActivityIndicator color='#bc2b78'
+                                size="large" style={{ flex: 1, alignSelf: 'center', }} />
+                        ) : (
+                            <TouchableOpacity style={styles.btn}
+                                onPress={userProfileData}
+                            // onPress={()=>{validForm();userProfileData()}}
+                            // onPress = {() =>  props.navigation.navigate('SemiPrivateRoom')}
+                            >
+                                <Text style={{ color: 'white', fontSize: hp('2.5%') }}>Submit</Text>
+                            </TouchableOpacity>
+                        )}
+                    </ScrollView>
+                </View>
+                <View style={{ bottom: 0, }}>
+                    <Modal isVisible={modalVisible}
+                        animationIn='zoomIn'
+                        animationOutTiming={500}
+                        animationInTiming={500}
+                        hideModalContentWhileAnimating={true}
+                        useNativeDriverForBackdrop={true}
+                        onBackdropPress={() => setModalVisible(false)}
+                        onSwipeComplete={() => setModalVisible(false)}
+                        swipeDirection={['down']}
+                        avoidKeyboard={true}
+                        useNativeDriver={true}
+                    // style={{ width: wp('90%'), }}
+                    >
+                        <View style={{ width: wp('90%'), height: hp('25%'), backgroundColor: 'white', borderRadius: hp('1%'), justifyContent: 'center' }}>
+                            {/* <View style={styles.centeredView}> */}
 
-
-
-                    </View>
-                )}
-            </Formik>
-          
+                            <View style={{ width: wp('88%'), height: hp('10%'), alignSelf: "center", alignItems: 'center', justifyContent: 'center' }}>
+                                <TouchableOpacity style={{ flexDirection: 'row', alignSelf: 'flex-start', width: wp('88%'), height: hp('7%'), paddingLeft: wp('2%'), alignItems: 'center', marginTop: hp('1%') }} onPress={() => captureImage('photo')}>
+                                    <FontAwesome5 name='camera' color='blue' size={hp('3%')} />
+                                    <Text style={{ marginLeft: wp('2%') }}>Camera</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{ flexDirection: 'row', alignSelf: 'flex-start', width: wp('88%'), height: hp('7%'), paddingLeft: wp('2%'), alignItems: 'center', marginTop: hp('1%') }} onPress={() => chooseFile('photo')}>
+                                    <FontAwesome5 name='photo-video' color='blue' size={hp('3%')} />
+                                    <Text style={{ marginLeft: wp('2%') }}>Photo and Video Library</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {/* </View> */}
+                    </Modal>
+                </View>
+                <View style={{ bottom: 0, }}>
+                    <Modal isVisible={payment}
+                        animationIn='zoomIn'
+                        animationOutTiming={500}
+                        animationInTiming={500}
+                        hideModalContentWhileAnimating={true}
+                        useNativeDriverForBackdrop={true}
+                        onBackdropPress={() => setPayment(false)}
+                        onSwipeComplete={() => setPayment(false)}
+                        swipeDirection={['down']}
+                        avoidKeyboard={true}
+                        useNativeDriver={true}
+                    // style={{ width: wp('90%'), }}
+                    >
+                        <View style={{ width: wp('90%'), height: hp('20%'), backgroundColor: 'white', borderRadius: hp('1%'), justifyContent: 'center' }}>
+                            <View style={{ width: wp('88%'), height: hp('10%'), alignSelf: "center", flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <TouchableOpacity style={{ width: wp('40%'), height: hp('6%'), backgroundColor: '#2581d4', alignItems: 'center', justifyContent: 'center', borderRadius: hp('1%'), }}>
+                                    <Text style={{ fontSize: hp('2%'), color: 'white' }}>Pay at Hospital</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{ width: wp('40%'), height: hp('6%'), backgroundColor: '#2581d4', alignItems: 'center', justifyContent: 'center', borderRadius: hp('1%'), }}>
+                                    <Text style={{ fontSize: hp('2%'), color: 'white' }}>Pay Now</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+                </View>
+                <View style={{ bottom: 0, }}>
+                    <Modal isVisible={thankYou}
+                        animationIn='zoomIn'
+                        animationOutTiming={500}
+                        animationInTiming={500}
+                        hideModalContentWhileAnimating={true}
+                        useNativeDriverForBackdrop={true}
+                        onBackdropPress={() => setThankYou(false)}
+                        onSwipeComplete={() => setThankYou(false)}
+                        swipeDirection={['down']}
+                        avoidKeyboard={true}
+                        useNativeDriver={true}
+                    // style={{ width: wp('90%'), }}
+                    >
+                        <View style={{ width: wp('90%'), height: hp('58%'), backgroundColor: 'white', borderRadius: hp('1%'), justifyContent: 'center' }}>
+                            <View style={{ width: wp('88%'), height: hp('57%'), alignSelf: "center", alignItems: 'center', justifyContent: 'center' }}>
+                                <TouchableOpacity style={{ alignSelf: 'flex-end' }} onPress={() => setThankYou(false)}>
+                                    <FontAwesome5 name='times' size={hp('2.5%')} color={Colors.black} />
+                                </TouchableOpacity>
+                                <Image source={require('../../Assets/Images/Group.png')}
+                                    style={{ width: hp('18%'), height: hp('18%'), borderRadius: hp('10%') }} />
+                                <Text style={styles.modalText}>Thank You!</Text>
+                                <Text style={styles.modalText2}>Your Booking Successful</Text>
+                                <Text style={{ textAlign: "center", fontSize: 14, marginBottom: 5, fontWeight: "bold" }}>Booking ID:{hjkhdjasdas.bookingId}</Text>
+                                <Text style={{ textAlign: "center", fontSize: 16, marginBottom: 5 }}>You booked a bed in {getValue} Hospital on</Text>
+                                <Text style={{ textAlign: "center", fontSize: 16, marginBottom: 5 }}>{hjkhdjasdas.bookingDate}</Text>
+                                <Text style={{ textAlign: "center", fontSize: 16, marginBottom: 5 }}>{hjkhdjasdas.bookingTime}</Text>
+                                <CustomButton
+                                    onPress={() => props.navigation.navigate('DrawerNavigator')}
+                                    title={'DONE'}
+                                    bgColor={'#2581d4'}
+                                    width={wp('75%')}
+                                    height={hp('7%')}
+                                    color={Colors.white}
+                                    fontSize={hp('2.5%')}
+                                    alignSelf={'center'}
+                                    padding={hp('8%')}
+                                    borderRadius={hp('2%')}
+                                    marginTop={hp('3%')}
+                                />
+                                <TouchableOpacity style={{ marginTop: hp('1%') }}
+                                    onPress={() => props.navigation.navigate('BookingSlot')}
+                                >
+                                    <Text style={{ alignSelf: 'center', color: Colors.blue, }}> <Text style={{ fontWeight: 'bold' }}></Text> Edit Your Appointment</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </Modal>
+                </View>
+            </View>
         </SafeAreaView>
-
     );
 }
 
@@ -857,25 +751,26 @@ const styles = StyleSheet.create({
     container: {
         width: wp('100%'),
         height: hp('100%'),
+
         justifyContent: 'center',
         alignItems: 'center',
-        // padding: wp('2%'),
-        // backgroundColor: 'cyan'
+        padding: wp('2%'),
+
     },
 
     header: {
         alignItems: 'center',
-        fontSize: hp('3.5%'),
+        fontSize: hp('5%'),
         fontWeight: 'bold',
         color: '#000000',
     },
 
     inputContainer: {
         width: wp('100%'),
-        height: hp('93%'),
-        padding: hp('1%'),
+        height: hp('90%'),
+        padding: wp('3%'),
 
-        //  backgroundColor: 'yellow',
+        // backgroundColor:'yellow',
 
     },
     pname: {
@@ -890,7 +785,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         // marginRight: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -901,7 +796,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
@@ -911,7 +806,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: wp('97%'),
-        borderRadius: wp('2%'),
+
         padding: wp('1%'),
     },
     inputTxt3: {
@@ -919,7 +814,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -931,11 +826,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#d3d3d3',
         borderRadius: hp('2%'),
 
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
-        padding: wp('2%'),
+        padding: wp('4%'),
 
     },
     fname: {
@@ -950,7 +845,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -969,7 +864,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -980,7 +875,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
@@ -998,7 +893,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -1009,7 +904,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: hp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
@@ -1029,8 +924,8 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
-        // backgroundColor: 'green',
+        marginTop: wp('3%'),
+
         justifyContent: 'center',
         alignItems: 'center',
         padding: wp('4%'),
@@ -1040,7 +935,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
@@ -1058,7 +953,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -1076,7 +971,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: hp('2%'),
-        // marginTop: wp('3%'),
+        //marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -1105,7 +1000,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
 
         justifyContent: 'center',
         alignItems: 'center',
@@ -1123,7 +1018,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         // marginRight: 10,
         justifyContent: 'center',
         alignItems: 'center',
@@ -1134,7 +1029,7 @@ const styles = StyleSheet.create({
         height: hp('7%'),
         backgroundColor: '#d3d3d3',
         borderRadius: wp('2%'),
-        marginTop: wp('2%'),
+        marginTop: wp('3%'),
         marginRight: wp('2.8%'),
         justifyContent: 'center',
         alignItems: 'center',
@@ -1144,31 +1039,27 @@ const styles = StyleSheet.create({
         width: wp('80%'),
         height: hp('7%'),
         //backgroundColor: 'pink',
-        // borderTopLeftRadius: hp('2%'),
-        // borderBottomLeftRadius: hp('2%'),
-        borderRadius: wp('1%'),
-        paddingLeft: wp('4%')
+        borderTopLeftRadius: hp('2%'),
+        borderBottomLeftRadius: hp('2%'),
+        paddingLeft: wp('3%')
     },
     termsCondition: {
         width: wp('100%'),
         flexDirection: 'row',
-        fontSize: hp('2.5%'),
-        paddingLeft: wp('4%'),
-        marginTop: wp('0.2%'),
+        fontSize: hp('3%'),
+        padding: wp('4%'),
+        marginTop: wp('3%'),
         alignItems: 'center',
-        //backgroundColor: 'green'
 
     },
     btn: {
-        width: wp('90%'),
 
         backgroundColor: '#2581d4',
         borderRadius: wp('2.4%'),
         justifyContent: 'center',
         alignItems: 'center',
-        height: hp('6.5%'),
-        // backgroundColor: 'green'
-        alignSelf: 'center'
+        height: hp('7%'),
+
     },
     txt: {
         fontWeight: 'bold',
@@ -1223,10 +1114,6 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         textAlign: "center",
         fontSize: 20,
-
     }
-
 });
-
-
 export default HospitalForm;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, SafeAreaView, StyleSheet, Image, Text, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { View, SafeAreaView, StyleSheet, Image, Text, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert, BackHandler } from 'react-native';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Colors from '../Assets/Constants/Colors';
@@ -10,23 +10,39 @@ import CustomButton from '../ReusableComponent/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { baseurl } from '../Config/baseurl';
-const VerifyResRegOtp = 'http://10.0.2.2:8000/user/phone/verifyOTP'
+const VerifyResRegOtp = baseurl + 'user/phone/verifyOTP'
 
-const Otp = ({ route,navigation }) => {
+const Otp = ({ route, navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [checked, setChecked] = React.useState('first');
     const [pin, setPin] = useState('')
-    // console.log('pin=====', pin)
+    const [isLoading, setIsLoading] = useState(false);
     // console.log('setPin=====', setPin)
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [date, setDate] = useState('');
     const [getValue, setGetValue] = useState('');
-    const { DetailsIdGet,phoneNo } = route.params;
-    
-// console.log("Details Id get===="+DetailsIdGet)
-// console.log("last page phone no=====" + phoneNo)
-  
+    const { DetailsIdGet, phoneNo } = route.params;
+
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
+            // Alert.alert("Hi User", "You can not go Back", [
+            //     {
+            //         text: "Cancel",
+            //         onPress: () => null,
+            //         style: "cancel"
+            //     },
+            //     // { text: "YES", onPress: () => BackHandler.exitApp() }
+            // ]);
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
 
     const validForm = () => {
 
@@ -53,18 +69,19 @@ const Otp = ({ route,navigation }) => {
 
         else {
             alert('Profile Data Submitted Successfully')
-            navigation.navigate('DrawerNavigator')
+            navigation.navigate('Profile')
         }
 
     };
     const onPressotpVerification = () => {
         // const DetailsId = AsyncStorage.getItem('DetailsId')
+        const keyToken = "tokenIdforSplash";
         // console.log("DetailsId");
         AsyncStorage.getItem('DetailsId').then(
-            (value)=>
-            setGetValue(value),
+            (value) =>
+                setGetValue(value),
         )
-        
+
         console.log(getValue);
         const verifyObj = {
             details: DetailsIdGet,
@@ -73,72 +90,77 @@ const Otp = ({ route,navigation }) => {
         }
         console.log("Verify obj value==" + verifyObj.otp);
         console.log(verifyObj);
-        verifyObj.otp=Number(verifyObj.otp)
+        verifyObj.otp = Number(verifyObj.otp)
         // verifyObj.phone
-      console.log(verifyObj);
+        console.log(verifyObj);
         const fetchData = async () => {
-      const f = axios.post(VerifyResRegOtp, verifyObj);
-      f.then(t => {
-        console.log(t.data);
-        
-        let tk = t.data.token;
-        AsyncStorage.setItem('tokenId', t.data.token);
-        console.log(tk);
-        axios
-          .get('http://10.0.2.2:8000/user/alreadyRegistered',
-            {headers: {Authorization: `Bearer ${tk}`},
-            
-          }
-          )
-          .then(res => {
-            console.log('wqe');
-            console.log(res.data);
-            console.log(res.data.message);
-            if (res.data.message =="No data found"){
-              navigation.navigate('Profile',{ Pname: tk })
-            }
-            else if (res.data.message =="User already registered"){
-              navigation.navigate('DrawerNavigator')
-            }
-            else {
-              console.log("Error occur")
-            }
-          });
-      }).catch(e => {
-        console.log('1st');
-      });
-    };
-    fetchData();
+            setIsLoading(true);
+            const f = axios.post(VerifyResRegOtp, verifyObj);
+            f.then(t => {
+                console.log(t.data);
+
+                let tk = t.data.token;
+                AsyncStorage.setItem('tokenId', tk);
+                console.log(tk);
+                axios
+                    .get(baseurl + 'user/alreadyRegistered',
+                        {
+                            headers: { Authorization: `Bearer ${tk}` },
+
+                        }
+                    )
+                    .then(res => {
+                        console.log('wqe');
+                        console.log(res.data);
+                        console.log(res.data.message);
+                        if (res.data.message == "No data found") {
+                            AsyncStorage.setItem('tokenkeyValue', keyToken);
+                            navigation.navigate('Profile', { Pname: tk })
+                        }
+                        else if (res.data.message == "User already registered") {
+                            AsyncStorage.setItem('tokenkeyValue', keyToken);
+                            navigation.navigate('DrawerNavigator')
+                                .finally(() => setIsLoading(false));
+                        }
+                        else {
+                            console.log("Error occur")
+                        }
+                    });
+            }).catch(e => {
+                console.log('1st');
+            });
+        };
+        fetchData();
     }
-    const reSendOtp =() => {
+    const reSendOtp = () => {
         const phoneNoData = {
             phone: phoneNo
         }
         console.log(phoneNoData);
         axios.post('http://10.0.2.2:8000/user/phone/login/', phoneNoData)
-        .then(res => {
-            console.log(res.data)
-           // console.log(res.data.Details)
-          //  let sfsdfsd = res.data.Details
-            //   AsyncStorage.setItem('DetailsId', sfsdfsd);
-            if (res.data.Status == 400) {
-                alert("Number is not ");
-            }
-            else if (res.data.Status == "Success") {
-                //  AsyncStorage.setItem('user_id')
-                //AsyncStorage.setItem('DetailsId', res.data.Details);
-               // navigation.navigate('Otp',{DetailsIdGet: res.data.Details});
-               onPressotpVerification();
-            }
-            else {
-                console.log('else condtion')
-            }
-            //console.log(res);
-            console.log(res.data.statusCode);
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+            .then(res => {
+                console.log(res.data)
+                // console.log(res.data.Details)
+                //  let sfsdfsd = res.data.Details
+                //   AsyncStorage.setItem('DetailsId', sfsdfsd);
+                if (res.data.Status == 400) {
+                    alert("Number is not ");
+                }
+                else if (res.data.Status == "Success") {
+                    //  AsyncStorage.setItem('user_id')
+                    //AsyncStorage.setItem('DetailsId', res.data.Details);
+                    // navigation.navigate('Otp',{DetailsIdGet: res.data.Details});
+                    onPressotpVerification();
+                }
+                else {
+                    console.log('else condtion')
+                }
+                //console.log(res);
+                console.log(res.data.statusCode);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
     }
 
     return (
@@ -158,7 +180,7 @@ const Otp = ({ route,navigation }) => {
                     style={{ flexDirection: 'row', alignSelf: 'center', marginTop: -hp('1%') }}
                 />
 
-                {pin.length !== 6 ? (
+                {pin.length !== 6 ?
 
                     <CustomButton
 
@@ -174,30 +196,34 @@ const Otp = ({ route,navigation }) => {
                         borderRadius={hp('1%')}
                         disabled={true}
                     />
-                ) : (
+                    : isLoading ?
 
-                    <CustomButton
-                        onPress={() => onPressotpVerification()}
-                        // onPress={() => navigation.navigate('Profile', { Pname: 'Priyanka Chauhan' })}
-                        title={'CONTINUE'}
-                        bgColor={'#0489D6'}
-                        width={wp('90%')}
-                        height={hp('7%')}
-                        color={Colors.white}
-                        fontSize={hp('2.5%')}
-                        alignSelf={'center'}
-                        marginTop={hp('5%')}
-                        borderRadius={hp('1%')}
+                        <ActivityIndicator color='#0489D6'
+                            size="large" style={{ flex: 1, alignSelf: 'center', }} />
 
-                    />
-                )}
-                
+                        :
+                        <CustomButton
+                            onPress={() => onPressotpVerification()}
+                            // onPress={() => navigation.navigate('Profile', { Pname: 'Priyanka Chauhan' })}
+                            title={'CONTINUE'}
+                            bgColor={'#0489D6'}
+                            width={wp('90%')}
+                            height={hp('7%')}
+                            color={Colors.white}
+                            fontSize={hp('2.5%')}
+                            alignSelf={'center'}
+                            marginTop={hp('5%')}
+                            borderRadius={hp('1%')}
 
-                <TouchableOpacity onPress={reSendOtp}>
+                        />
+                }
+
+
+                {/* <TouchableOpacity onPress={reSendOtp}>
 
 
                     <Text style={{ alignSelf: 'flex-end', padding: wp('5%'), color: '#000000' }}>Resend Otp</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
             </View>
             <Modal
@@ -289,7 +315,7 @@ const Otp = ({ route,navigation }) => {
                         <CustomButton
 
                             onPress={validForm}
-                          
+
                             title={'Submit'}
                             bgColor={Colors.darkGreen}
                             width={wp('40%')}

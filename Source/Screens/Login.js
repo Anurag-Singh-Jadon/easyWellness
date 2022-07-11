@@ -1,75 +1,85 @@
 import React, { useState, useEffect } from 'react'
-import { View, SafeAreaView, StyleSheet, Image, Text, TouchableOpacity, Linking } from 'react-native';
-import {  GoogleSignin, statusCodes,} from '@react-native-google-signin/google-signin';
-
+import { View, SafeAreaView, StyleSheet, Image, Text, TouchableOpacity, BackHandler } from 'react-native';
+import { GoogleSignin, statusCodes, } from '@react-native-google-signin/google-signin';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Colors from '../Assets/Constants/Colors';
 import CustomButton from '../ReusableComponent/Button';
-import {IndicatorViewPager, PagerDotIndicator} from '@shankarmorwal/rn-viewpager';
+import { IndicatorViewPager, PagerDotIndicator } from '@shankarmorwal/rn-viewpager';
 import axios from 'axios';
-import { facebookurl } from './facebook';
-
+// import { facebookurl } from './facebook';
 
 const Login = ({ navigation }) => {
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
+            // Alert.alert("Hi User", "You can not go Back", [
+            //     {
+            //         text: "Cancel",
+            //         onPress: () => null,
+            //         style: "cancel"
+            //     },
+            //     // { text: "YES", onPress: () => BackHandler.exitApp() }
+            // ]);
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
 
+    const signIn = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+            setgmail(userInfo);
+            //Navigate user where you want and store information
+        } catch (error) {
+            if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+                // user cancelled the login flow
+            } else if (error.code === statusCodes.IN_PROGRESS) {
+                // operation (f.e. sign in) is in progress already
+            } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                // play services not available or outdated
+            } else {
+                // some other error happened
+            }
+        }
 
-const signIn = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      setgmail(userInfo);
-           //Navigate user where you want and store information
-    } catch (error) {
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        // user cancelled the login flow
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        // operation (f.e. sign in) is in progress already
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        // play services not available or outdated
-      } else {
-        // some other error happened
-      }
-    }
-   
-     axios({
-        method: 'get',
-        url: 'https://ehospi-finally-done.herokuapp.com/api/auth/google',
-        withCredentials: true
-    })
-        .then(function (response) {
-            console.log('response==>', response.data);
-            flag = true;
-            //id = response.data.kid
+        axios({
+            method: 'get',
+            url: 'https://ehospi-finally-done.herokuapp.com/api/auth/google',
+            withCredentials: true
         })
-        .catch(function (response) {
-            console.log('error');
-        });
+            .then(function (response) {
+                console.log('response==>', response.data);
+                flag = true;
+                //id = response.data.kid
+            })
+            .catch(function (response) {
+                console.log('error');
+            });
     };
-
-
-
-handleGoogle = () => {
-    
+    handleGoogle = () => {
         GoogleSignin.configure({
             androidClientId: 'ADD_YOUR_ANDROID_CLIENT_ID_HERE862811103066-d0oue8c16ecomgsq46pkc634osk870o8.apps.googleusercontent.com',
-           // iosClientId: 'ADD_YOUR_iOS_CLIENT_ID_HERE',
+            // iosClientId: 'ADD_YOUR_iOS_CLIENT_ID_HERE',
         });
-       GoogleSignin.hasPlayServices().then((hasPlayService) => {
+        GoogleSignin.hasPlayServices().then((hasPlayService) => {
             if (hasPlayService) {
-                 GoogleSignin.signIn().then((userInfo) => {
-                           console.log(JSON.stringify(userInfo))
-                           
-                 }).catch((e) => {
-                 console.log("ERROR IS: " + JSON.stringify(e));
-                 })
+                GoogleSignin.signIn().then((userInfo) => {
+                    console.log(JSON.stringify(userInfo))
+
+                }).catch((e) => {
+                    console.log("ERROR IS: " + JSON.stringify(e));
+                })
             }
-    }).catch((e) => {
-        console.log("ERROR IS: " + JSON.stringify(e));
-    })
-    
-}
+        }).catch((e) => {
+            console.log("ERROR IS: " + JSON.stringify(e));
+        })
 
-
+    }
     return (
         <SafeAreaView>
             <View style={styles.contr}>
@@ -85,13 +95,12 @@ handleGoogle = () => {
                 </IndicatorViewPager>
 
                 <TouchableOpacity style={styles.upperButton}
-                    // onPress={() => navigation.navigate('SelectNumber', { itemId: 86 })}
-                onPress={() => navigation.navigate('DrawerNavigator', { itemId: 86 })}
+                    onPress={() => navigation.navigate('SelectNumber', { itemId: 86 })}
+                //    onPress={() => navigation.navigate('DrawerNavigator', { itemId: 86 })}
                 // onPress={() => navigation.navigate('SemiPrivateRoom', { itemId: 86 })}
                 >
                     <Text style={{ fontSize: hp('2%'), fontWeight: 'bold', color: Colors.white }}>Login with Mobile Number</Text>
                 </TouchableOpacity>
-
                 <View style={styles.lowerContr}>
                     <View style={{ flexDirection: 'row', justifyContent: 'center', paddingTop: hp('3%'), alignItems: 'center', }}>
                         <View
@@ -104,7 +113,6 @@ handleGoogle = () => {
                     </View>
 
                     <View style={styles.btnSet}>
-
                         <TouchableOpacity onPress={handleGoogle} style={styles.payment}>
                             <Image source={require('../Assets/Images/Google.png')}
                                 style={{ width: wp('8%'), height: hp('4%'), }} />
@@ -112,7 +120,7 @@ handleGoogle = () => {
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.payment, { borderColor: Colors.blue }]}
                         //  onPress={handleSubmit}
-                         >
+                        >
                             <Image source={require('../Assets/Images/Facebook.png')}
                                 style={{ width: wp('8%'), height: hp('4%'), }} />
                             <Text style={{ fontWeight: 'bold', color: Colors.black, fontSize: hp('1.8%'), marginLeft: wp('1.5%') }}>Facebook</Text>

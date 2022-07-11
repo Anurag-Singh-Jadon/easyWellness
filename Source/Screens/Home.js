@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ImageBackground,
+  BackHandler
 } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import {
@@ -50,6 +51,19 @@ const Home = ({ navigation }) => {
   const [getValue, setGetValue] = useState('');
   const [getLocation, setLocation] = useState('');
   // console.log('getvalue data' + getValue);
+
+  useEffect(() => {
+    const backAction = () => {
+      console.log('You can not go Back');
+
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, [])
   useEffect(() => {
     getValueFunction();
     var date = new Date().getDate(); //Current Date
@@ -129,7 +143,7 @@ const Home = ({ navigation }) => {
     <SafeAreaView>
       <View style={styles.contnr}>
         <LinearGradient
-          start={{ x: 0, y: 0 }}
+          start={{ x: 1, y: 1 }}
           end={{ x: 1, y: 0 }}
           colors={['#B2F3FF', '#0489D6']}
           style={{
@@ -233,7 +247,7 @@ const Home = ({ navigation }) => {
             marginTop: hp('1.5%'),
             paddingTop: wp('2%'),
           }}>
-          <View style={{ height: hp('55%') }}>
+          <View style={{ height: hp('60%') }}>
             <ScrollView showsVerticalScrollIndicator={false} >
               {/* <View style={{ width: wp('85%'), height: hp('5%'), backgroundColor: Colors.white, alignSelf: 'center', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', borderRadius:hp('1%') }}>
                             <Text>Payment Mode</Text>
@@ -367,7 +381,7 @@ const Home = ({ navigation }) => {
                   marginTop: hp('1%'),
                   alignSelf: 'center',
                 }}>
-                <Text style={{ fontWeight:'bold' }}>Search by Category</Text>
+                <Text style={{ fontWeight: 'bold' }}>Search by Category</Text>
                 <ScrollView
                   horizontal={true}
                   showsHorizontalScrollIndicator={false}>

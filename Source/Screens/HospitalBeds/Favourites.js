@@ -14,8 +14,6 @@ const Favourites = (props) => {
         {
             t1: `Dr Ram Manohar`, t2: `Lohia Hospital`
         },
-
-
     ]
 
     return (
@@ -35,19 +33,7 @@ const Favourites = (props) => {
                     }
                 />
             </View>
-
-
-
-
-
-
-
-
-
-
-
         </View>
-
     )
 }
 
@@ -67,6 +53,3 @@ const styles = StyleSheet.create({
     }
 
 })
-
- //backgroundColor: Colors.grayShade,
- //backgroundColor: 'red' 

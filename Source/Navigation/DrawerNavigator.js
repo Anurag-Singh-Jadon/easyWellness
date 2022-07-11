@@ -42,33 +42,33 @@ const NavigationDrawerStructure = (props) => {
   return (
 
     <View
-      style={{
-        width: wp('100%'),
-        //height: hp('60%'),
-        // backgroundColor: Colors.white,
-        paddingHorizontal: wp('3%'),
-
-
-        backgroundColor: '#B2f3ff'
-      }}>
-      <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#B2F3FF', '#0489D6',]} style={{ width: wp('100%'), alignItems: 'flex-start', flexDirection: "row", height: hp('8%'), paddingTop: hp('2%') }}>
-        <TouchableOpacity
-          onPress={toggleDrawer}
-        >
-          <FontAwesome5 name='bars' size={hp('4%')} color={Colors.white} />
-        </TouchableOpacity>
-        <TouchableOpacity style={{ padding: wp('1%'), marginLeft: wp('3%'), }}
-          // onPress={() => props.navigation.navigate('Location')}
-        >
-          {/* <FontAwesome5 name='map-marker-alt'  size={hp('2%')} /> */}
-          <Text style={{ fontWeight: 'bold',fontStyle:'italic', fontSize: hp('2.5%'), marginLeft: wp('0.1%'), color: Colors.white }}>Welcome to eHospi</Text>
-        </TouchableOpacity>
-        {/* <Image source={require('../Assets/Images/doctor.jpg')}
-                        style={{ width: wp('18%'), height: wp('18%'), borderRadius: hp('5%'),marginLeft:wp('40%'),marginTop: hp('3%') }} /> */}
-      </LinearGradient>
-    </View>
-
-
+    style={{
+      width: wp('100%'),
+      //height: hp('60%'),
+      // backgroundColor: Colors.white,
+      paddingHorizontal: wp('3%'),
+      alignItems: 'flex-start',
+      flexDirection: "row",
+      backgroundColor: '#0489D6',
+      height: hp('8%'),
+      paddingTop: hp('2%')
+    }}>
+    {/* <LinearGradient start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} colors={['#B2F3FF', '#0489D6',]} style={{ width: wp('100%'), alignItems: 'flex-start', flexDirection: "row", height: hp('8%'), paddingTop: hp('2%') }}> */}
+    <TouchableOpacity
+      onPress={toggleDrawer}
+    >
+      <FontAwesome5 name='bars' size={hp('4%')} color={Colors.white} />
+    </TouchableOpacity>
+    <TouchableOpacity style={{ padding: wp('1%'), marginLeft: wp('3%'), }}
+    // onPress={() => props.navigation.navigate('Location')}
+    >
+      {/* <FontAwesome5 name='map-marker-alt'  size={hp('2%')} /> */}
+      <Text style={{ fontWeight: 'bold', fontStyle: 'italic', fontSize: hp('2.5%'), marginLeft: wp('0.1%'), color: Colors.white }}>Welcome to eHospi</Text>
+    </TouchableOpacity>
+    {/* <Image source={require('../Assets/Images/doctor.jpg')}
+                      style={{ width: wp('18%'), height: wp('18%'), borderRadius: hp('5%'),marginLeft:wp('40%'),marginTop: hp('3%') }} /> */}
+    {/* </LinearGradient> */}
+  </View>
   );
 };
 function HomeScreenStack({ navigation }) {

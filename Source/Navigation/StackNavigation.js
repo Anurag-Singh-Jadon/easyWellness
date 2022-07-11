@@ -37,6 +37,8 @@ import PaymentAndHealthCash from '../Screens/Drawer/PaymentAndHealthCash';
 import Settings from '../Screens/Drawer/Settings';
 import About from '../Screens/About';
 import Department from '../Screens/Department';
+import EditProfile from '../Screens/EditProfile';
+import BookingHistoryTwo from '../Screens/BookingHistoryTwo';
 
 const Stack = createStackNavigator();
 const screenOptionStyle = {
@@ -55,7 +57,7 @@ const MainStackNavigator = () => {
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
       <Stack.Screen name="SelectNumber" component={SelectNumber} options={{ headerShown: false }} />
       <Stack.Screen name="Otp" component={Otp} options={{ headerShown: false }} />
-      <Stack.Screen name="BookingHistory" component={BookingHistory} />
+      <Stack.Screen name="BookingHistory" component={BookingHistory} options={{ headerShown: false }} />
       <Stack.Screen name="Files" component={Files} />
       <Stack.Screen name="BookBed" component={BookBed} options={{ headerShown: false }} />
       <Stack.Screen name="MyTabs" component={MyTabs} options={{ headerShown: false }} />
@@ -83,6 +85,8 @@ const MainStackNavigator = () => {
       <Stack.Screen name="Settings" component={Settings} />
       <Stack.Screen name="About" component={About} options={{ headerShown: false }}/>
       <Stack.Screen name="Department" component={Department} options={{ headerShown: false }}/>
+      <Stack.Screen name="EditProfile" component={EditProfile} options={{ headerShown: false }}/>
+      <Stack.Screen name="BookingHistoryTwo" component={BookingHistoryTwo} options={{ headerShown: false }}/>
     </Stack.Navigator>
 
   );

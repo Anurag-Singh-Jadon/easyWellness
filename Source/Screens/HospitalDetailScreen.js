@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TouchableOpacity, View, StyleSheet, Image, ScrollView, Pressable } from 'react-native'
+import { TouchableOpacity, View, StyleSheet, Image, ScrollView, ActivityIndicator, BackHandler } from 'react-native'
 import Colors from '../Assets/Constants/Colors';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import { Tab, Text, TabView, colors } from 'react-native-elements';
-import About from '../Screens/About';
-import Department from '../Screens/Department';
-import HomeScreen from '../Screens/BookBed';
+import { Text } from 'react-native-elements';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import BookBed from '../Screens/BookBed';
-import { color } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import getDirections from 'react-native-google-maps-directions'
 import MapView, { Callout, Circle, Marker } from "react-native-maps";
@@ -23,11 +17,14 @@ const HospitalDetailScreen = ({ route, navigation }) => {
     const [getLocation, setGetLocation] = useState('');
     const [getValue, setGetValue] = useState('');
     const [theArray, setTheArray] = useState([]);
-    const [getHospitalCode,setHospitalCode] = useState([]);
-    const [getServices,setServices] = useState([]);
+    const [getHospitalCode, setHospitalCode] = useState([]);
+    const [getServices, setServices] = useState([]);
+    const [getTokenId, setTokenId] = useState();
+    const [isLoading, setIsLoading] = useState(false);
+    const [getHospitalAddress, setHospitalAddress] = useState('');
     // const hospitalDetails = route.params;
-     const HLat = 28.621309
-     const HLong = 77.365471
+    const HLat = 28.621309
+    const HLong = 77.365471
     //    console.log(HLat,HLong)
     const HandleGetDirections = () => {
         const data = {
@@ -78,13 +75,26 @@ const HospitalDetailScreen = ({ route, navigation }) => {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421
     })
-    
+
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
+
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
+
     useEffect(() => {
         displayData();
-       // userServicesData();
-       HospitalDataServices();
+        // userServicesData();
+        HospitalDataServices();
         _isMounted.current = false;
-    });
+    }, [getTokenId]);
     displayData = async () => {
         try {
             let user = await AsyncStorage.getItem('Hname').then(
@@ -97,6 +107,16 @@ const HospitalDetailScreen = ({ route, navigation }) => {
                     //   setGetValue(Hname),
                     setHospitalCode(code)
             )
+            let user3 = await AsyncStorage.getItem('Haddress').then(
+                (Hadd) =>
+                    //   setGetValue(Hname),
+                    setHospitalAddress(Hadd)
+            )
+            await AsyncStorage.getItem('tokenId').then(
+                (token) =>
+                    //   setGetValue(Hname),
+                    setTokenId(token)
+            )
 
         }
         catch (error) {
@@ -104,20 +124,22 @@ const HospitalDetailScreen = ({ route, navigation }) => {
         }
     }
     const HospitalDataServices = () => {
-      
-        axios.get('http://10.0.2.2:8000/user/findServices/' + getHospitalCode, { headers: { "Authorization": `Bearer ${'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOiJwaDg5NTA2MTIzNTIiLCJpYXQiOjE2NTI2NzcxOTAsImV4cCI6MTY1Mjc2MzU5MH0.o8UV_ikmevKxUXAG1UC9Rn0fDIR1mhBtK8zEeGvh81Q'}` } })
+        setIsLoading(true);
+        axios.get(baseurl + 'user/findServices/' + getHospitalCode, { headers: { "Authorization": `Bearer ${getTokenId}` } })
             .then(response => {
-                  // console.log(response.data)
+                // console.log(response.data)
                 // console.log(response.data[0].details)
                 setServices(response.data[0].details)
-              // console.log(getServices);
+                // console.log(getServices);
                 // console.log(response.data[0].details[1].services)
-            })
+            }).catch((e) => {
+                console.log(e)
+            }).finally(() => setIsLoading(false));
     }
-   
+
     return (
         <View style={styles.contr}>
-                       <View style={styles.imgSlider}>
+            <View style={styles.imgSlider}>
                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                     <Image source={require('../Assets/Images/Bed.png')} style={{ width: wp('100%'), height: hp('30%'), }} />
                     <Image source={require('../Assets/Images/img01.jpg')} style={{ width: wp('100%'), height: hp('30%'), }} />
@@ -127,7 +149,7 @@ const HospitalDetailScreen = ({ route, navigation }) => {
             </View>
             <View style={{ padding: wp('2%'), height: hp('8%'), }}>
                 <Text style={{ fontSize: hp('2.5%'), color: Colors.black, fontWeight: 'bold', }}>{getValue}</Text>
-                <Text style={{ fontSize: hp('1.8%'), color: Colors.black, }}>{getHospitalCode}</Text>
+                <Text style={{ fontSize: hp('1.8%'), color: Colors.black, }}>{getHospitalAddress}</Text>
             </View>
             <View style={{ width: wp('100%'), height: hp('7%'), flexDirection: 'row' }}>
                 <TouchableOpacity style={{ width: wp('33.33%'), height: hp('7%'), backgroundColor: '#00abf6', alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#00abf6' }}  >
@@ -144,26 +166,23 @@ const HospitalDetailScreen = ({ route, navigation }) => {
             <View style={styles.lowerContainer}>
                 <View style={{ height: hp('55%') }}>
                     <ScrollView showsVerticalScrollIndicator={false}>
-                        <View style={{ width: wp('100%'), height: hp('16%'), }}>
-                            <Text style={{ fontWeight: 'bold', fontSize: hp('2.5%'), color: Colors.darkGray, marginLeft: wp('1%') }}>Services</Text>
-                            <View style={{ marginTop: hp('1%'), }}>
-                                {getServices.length !== 0 && getServices.map((val) => {
-                                    return (
-                                        <Text style={{ color: Colors.black, fontSize: hp('1.5%'), marginLeft: wp('1%') }}>{val.services}</Text>
-                                    )
+                        {isLoading ? (
+                            <ActivityIndicator color='#bc2b78'
+                                size="large" style={{ flex: 1, alignSelf: 'center', marginTop: 25 }} />
+                        ) : (
+                            <View style={{ width: wp('100%'), height: hp('16%'), }}>
+                                <Text style={{ fontWeight: 'bold', fontSize: hp('2.5%'), color: Colors.darkGray, marginLeft: wp('1%') }}>Services</Text>
+                                <View style={{ width: wp('100%'), height: hp('10%'), marginTop: hp('1%'), flexWrap: 'wrap', }}>
+                                    {getServices.length !== 0 && getServices.map((val) => {
+                                        return (
+                                            <Text style={{ color: Colors.black, fontSize: hp('1.5%'), marginLeft: wp('1%') }}>{val.services}</Text>
+                                        )
 
-                                })}
+                                    })}
+                                </View>
                             </View>
-                        </View>
-                        {/* <TouchableOpacity>
-                            <Text style={{ marginTop: hp('2%'), color: Colors.blue }}>+5 more</Text>
-                        </TouchableOpacity> */}
-
-                        {/* <Text style={{fontSize:16}}>Address</Text> */}
-                        {/* <Image source={require('../Assets/Images/map.png')}
-                            style={{ width: wp('100%'), height: hp('30%'), borderRadius: hp('1.5%'), marginTop: hp('2%'), }} /> */}
+                        )}
                         <View style={{ width: wp('96%'), height: hp('32%'), alignSelf: 'center', borderRadius: hp('1%') }}>
-
                             <MapView
                                 style={styles.map}
                                 initialRegion={{
@@ -195,23 +214,13 @@ const HospitalDetailScreen = ({ route, navigation }) => {
                                 </Marker>
                             </MapView>
                         </View>
-
-                        {/* <View style={{ width: wp('100%'), height: hp('8%'), backgroundColor: 'pink' }}> */}
                         <TouchableOpacity style={{ width: wp('100%'), height: hp('7%'), backgroundColor: Colors.skyblue, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: hp('3%') }} onPress={HandleGetDirections}>
                             <Text style={{ fontWeight: 'bold', color: Colors.white, fontSize: hp('3%') }}>Get Directions</Text>
                         </TouchableOpacity>
-                        {/* </View> */}
-
                     </ScrollView>
-
                 </View>
-
-
             </View>
-
-
         </View>
-
     )
 }
 

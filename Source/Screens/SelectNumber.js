@@ -1,21 +1,20 @@
 import React, { Component } from 'react'
-import { View, SafeAreaView, StyleSheet, Image, Text, TouchableOpacity, TextInput, KeyboardAvoidingView } from 'react-native';
-
+import { View, SafeAreaView, StyleSheet, Image, Text, TouchableOpacity, TextInput, ActivityIndicator, BackHandler } from 'react-native';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import Colors from '../Assets/Constants/Colors';
 import CustomButton from '../ReusableComponent/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PagerTabIndicator, IndicatorViewPager, PagerTitleIndicator, PagerDotIndicator, } from '@shankarmorwal/rn-viewpager';
-
-
+import { IndicatorViewPager, PagerDotIndicator, } from '@shankarmorwal/rn-viewpager';
 import axios from 'axios';
 import { baseurl } from '../Config/baseurl';
 
+const phoneLogin = baseurl + 'user/phone/login/'
 class SelectNumber extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            phone: ''
+            phone: '',
+            isLoading: (false),
         }
     }
     handleSubmit = () => {
@@ -28,8 +27,9 @@ class SelectNumber extends Component {
         // console.log(phone);
         console.log(SubmitDAta);
         console.log('hit')
-        console.log('http://10.0.2.2:8000/user/phone/login/', SubmitDAta.phone);
-        axios.post('http://10.0.2.2:8000/user/phone/login/', SubmitDAta)
+        console.log(phoneLogin, SubmitDAta.phone);
+        this.setState({ isLoading: true });
+        axios.post(phoneLogin, SubmitDAta)
             .then(res => {
                 console.log(res.data)
                 console.log(res.data.Details)
@@ -52,38 +52,33 @@ class SelectNumber extends Component {
             })
             .catch(function (error) {
                 console.log(error);
-            });
-        //event.preventDefault();
+            })
+            .finally(() => this.setState({ isLoading: false }));
+        [this.state.isLoading]
     }
-    // _handleInput = () => {
 
-    //     const { phone } = this.state;
+    backAction = () => {
+        console.log('You can not go Back');
+        return true;
+    };
 
-    //     console.log('phone', phone)
-    //     var phoneno = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-    //     if (phone.match(phoneno)) {
+    componentDidMount() {
+        this.backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            this.backAction
+        );
+    }
 
-    //         //alert('Phone Number is Valid')
-    //         this.props.navigation.navigate('Otp');
-    //         return true;
-
-    //     }
-    //     else {
-    //         alert("Invalid Phone Number");
-    //         // this.setState({ valid: true })
-    //         return false;
-    //     }
-    // }
+    componentWillUnmount() {
+        this.backHandler.remove();
+    }
 
     render() {
 
-        // const user_name = this.props.navigation.getParam('userName'); 
-        //console.log("User NAme-----",user_name)
         return (
             <SafeAreaView>
                 <View style={styles.contr}>
 
-                    {/* <Image source={require('../Assets/Images/Bed.png')} style={styles.imgBed} /> */}
                     <IndicatorViewPager
                         style={styles.imgSlider}
                         indicator={
@@ -93,19 +88,6 @@ class SelectNumber extends Component {
                         <Image source={require('../Assets/Images/img01.jpg')} />
                         <Image source={require('../Assets/Images/Bed.png')} />
                     </IndicatorViewPager>
-
-                    {/* <CustomButton
-
-                    title={'CONTINUE'}
-                    bgColor={Colors.white}
-                    width={wp('90%')}
-                    height={hp('7%')}
-                    color={Colors.white}
-                    fontSize={hp('2.5%')}
-                    alignSelf={'center'}
-                    marginTop={-hp('3%')}
-                    borderRadius={hp('2%')}
-                /> */}
                     <TextInput
                         placeholder='Enter Mobile Number'
                         placeholderTextColor={'#a2a2a2'}
@@ -114,7 +96,6 @@ class SelectNumber extends Component {
                         keyboardType='name-phone-pad'
                         onChangeText={(phone) => this.setState({ phone: phone })}
                     />
-
                     <View style={styles.lowerContr}>
                         <View style={{ flexDirection: 'row', justifyContent: 'center', paddingTop: hp('3%'), alignItems: 'center', }}>
                             <View
@@ -125,7 +106,6 @@ class SelectNumber extends Component {
                                 style={styles.line}
                             />
                         </View>
-
                         <View style={styles.btnSet}>
                             <TouchableOpacity style={styles.payment}>
                                 <Image source={require('../Assets/Images/Google.png')}
@@ -138,23 +118,25 @@ class SelectNumber extends Component {
                                 <Text style={{ fontWeight: 'bold', color: Colors.black, fontSize: hp('1.8%'), marginLeft: wp('1.5%') }}>Facebook</Text>
                             </TouchableOpacity>
                         </View>
+                        {this.state.isLoading ? (
 
-                        {/* <TouchableOpacity style={styles.lowerButton}>
-                        <Text style={{ fontSize: hp('2.5%'), fontWeight: 'bold', color: Colors.white }}>CONTINUE</Text>
-                    </TouchableOpacity> */}
-                        <CustomButton
-                            onPress={() => this.handleSubmit()}
-                            // onPress = {() =>  this.props.navigation.navigate('GeneralBeds')}
-                            title={'CONTINUE'}
-                            bgColor={'#2581d4'}
-                            width={wp('90%')}
-                            height={hp('7.5%')}
-                            color={Colors.white}
-                            fontSize={hp('2.4%')}
-                            alignSelf={'center'}
-                            marginTop={hp('3%')}
-                            borderRadius={hp('1%')}
-                        />
+                            <ActivityIndicator color='#2581d4'
+                                size="large" style={{ flex: 1, alignSelf: 'center', }} />
+                        ) : (
+                            <CustomButton
+                                onPress={() => this.handleSubmit()}
+                                // onPress = {() =>  this.props.navigation.navigate('GeneralBeds')}
+                                title={'CONTINUE'}
+                                bgColor={'#2581d4'}
+                                width={wp('90%')}
+                                height={hp('7.5%')}
+                                color={Colors.white}
+                                fontSize={hp('2.4%')}
+                                alignSelf={'center'}
+                                marginTop={hp('3%')}
+                                borderRadius={hp('1%')}
+                            />
+                        )}
                         <View style={{ height: hp('5%'), width: wp('100%'), flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                             <TouchableOpacity>
                                 <Text style={{ alignSelf: 'center', paddingTop: hp('1%'), color: Colors.blue, textDecorationLine: 'underline', fontSize: hp('1.5%') }}>Terms&Condition  </Text>
@@ -183,7 +165,6 @@ const styles = StyleSheet.create({
     lowerContr: {
         width: wp('100%'),
         height: hp('46.5%'),
-
     },
     imgSlider: {
         width: wp('100%'),
@@ -215,7 +196,6 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
     },
-
     lowerButton: {
         width: wp('90%'),
         height: hp('7%'),
@@ -242,7 +222,4 @@ const styles = StyleSheet.create({
         padding: wp('8%'),
         marginTop: hp('3%')
     }
-
-
-
 })

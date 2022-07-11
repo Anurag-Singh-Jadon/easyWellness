@@ -1,5 +1,5 @@
-import { Image, Keyboard, KeyboardAvoidingView, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import React, { useState } from 'react';
+import { Image, Keyboard, KeyboardAvoidingView, SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View, BackHandler } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import DatePicker from 'react-native-datepicker';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
@@ -7,34 +7,67 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { baseurl } from '../Config/baseurl';
 
-const userDataReg = 'http://10.0.2.2:8000/user/phone/createProfile'
-
+const userDataReg = baseurl + 'user/phone/createProfile'
 const ProfileScreen = ({ route, navigation }) => {
     const [selected, setSelected] = useState();
     const [gettokenId, setTokenID] = useState();
+    const [getTokenId, setTokenId] = useState();
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [dob, setDob] = useState('');
     const [checked, setChecked] = React.useState('first');
     const [date, setDate] = useState('');
-    console.log('First name===' + firstName)
-    const { Pname } = route.params;
-    console.log("Last Page NAme VAlue", Pname)
+    const [isCheckSelected, setCheckSelected] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // console.log('First name===' + firstName)
+
+    useEffect(() => {
+        GetBookBedData();
+    }, [getTokenId])
+
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
+            // Alert.alert("Hi User", "You can not go Back", [
+            //     {
+            //         text: "Cancel",
+            //         onPress: () => null,
+            //         style: "cancel"
+            //     },
+            //     // { text: "YES", onPress: () => BackHandler.exitApp() }
+            // ]);
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
+    const GetBookBedData = async () => {
+
+
+
+        await AsyncStorage.getItem('tokenId').then(
+            (token) =>
+                //   setGetValue(Hname),
+                setTokenId(token)
+        )
+    }
     const saveValueFunction = () => {
         // Function to save the value in AsyncStorage
         try {
             if (firstName) {
                 // To check the input not empty
-                AsyncStorage.setItem('any_key_here', firstName);
+                AsyncStorage.setItem('First_Name', firstName);
                 // Setting a data to a AsyncStorage with respect to a key
                 setFirstName('');
-                // Resetting the TextInput
-                //   console.log("First name value====" +setFirstName)
-                // alert('Data Saved');
-                // Alert to confirm
+
             } else {
-                alert('Please fill data');
+                // alert('Please fill data');
+                console.log('Please fill data')
             }
         } catch (error) {
             console.log(error)
@@ -48,23 +81,17 @@ const ProfileScreen = ({ route, navigation }) => {
         p[1] = p[0];
         p[0] = temp;
         p = p.join("-")
-        console.log(p);
+        // console.log(p);
         const userData = {
             fullName: (firstName + ' ' + lastName),
             dateOfBirth: (p),
             email: (email),
             gender: (isCheckSelected)
         }
-        AsyncStorage.getItem('tokenId').then(
-            (value) =>
-                setTokenID(value),
-        )
-        console.log(gettokenId)
-        console.log('---------------------setTokenID------------------');
-        console.log(Pname)
 
-        // console.log(userDataReg, userData)
-        axios.post(userDataReg, userData, { headers: { "Authorization": `Bearer ${Pname}` } })
+        setIsLoading(true);
+
+        axios.post(userDataReg, userData, { headers: { "Authorization": `Bearer ${getTokenId}` } })
             .then(response => {
                 console.log('data is coming');
                 console.log(response.data);
@@ -74,12 +101,14 @@ const ProfileScreen = ({ route, navigation }) => {
                 }
                 else if (response.data.message === "Profile already created") {
                     alert("user is alredy register");
+                    AsyncStorage.setItem('keyValue', 'true');
+                    navigation.navigate('DrawerNavigator')
 
                 }
                 else {
                     console.log("Error Occured")
                 }
-            })
+            }).finally(() => setIsLoading(false));
     }
     const myProfile = () => {
         saveValueFunction();
@@ -102,7 +131,7 @@ const ProfileScreen = ({ route, navigation }) => {
             navigation.navigate('DrawerNavigator')
         }
     }
-    const [isCheckSelected, setCheckSelected] = useState(1);
+
     const products = [{
         id: 1,
         name: "Male"
@@ -230,12 +259,17 @@ const ProfileScreen = ({ route, navigation }) => {
                             </View>
                         </View>
                         <View style={{ width: wp('100%'), height: hp('11%'), justifyContent: 'center', alignItems: 'center', backgroundColor: 'white', }}>
-                            <TouchableOpacity
-                                onPressIn={userProfileData}
-                                onPress={() => navigation.navigate('DrawerNavigator')}
-                                style={{ width: wp('70%'), height: hp('6%'), justifyContent: 'center', alignItems: 'center', backgroundColor: '#00ABF6', borderRadius: hp('1.5%'), marginTop: -hp('3.2%') }}>
-                                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: hp('2.2%') }}>Submit</Text>
-                            </TouchableOpacity>
+                            {isLoading ? (
+                                <ActivityIndicator color='#bc2b78'
+                                    size="large" style={{ flex: 1, alignSelf: 'center', }} />
+                            ) : (
+                                <TouchableOpacity
+                                    onPressIn={userProfileData}
+                                    // onPress={() => navigation.navigate('DrawerNavigator')}
+                                    style={{ width: wp('70%'), height: hp('6%'), justifyContent: 'center', alignItems: 'center', backgroundColor: '#00ABF6', borderRadius: hp('1.5%'), marginTop: -hp('3.2%') }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: hp('2.2%') }}>Submit</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </ScrollView>
                 </TouchableWithoutFeedback>

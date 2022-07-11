@@ -1,66 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 // import all the components we are going to use
-import { SafeAreaView, StyleSheet, View, Text, FlatList, Modal, Pressable, Alert, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { SafeAreaView, StyleSheet, View, Text, FlatList, Modal, Pressable, Alert, TouchableOpacity, Image, ScrollView, BackHandler } from 'react-native';
 import Colors from '../Assets/Constants/Colors';
-import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
-//import CalendarPicker from the package we installed
-import CalendarPicker from 'react-native-calendar-picker';
-import Circle from '../ReusableComponent/Circle';
 import CustomButton from '../ReusableComponent/Button';
 import DatePicker from 'react-native-modern-datepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-
 
 const Calender = (props) => {
-
     const [selectedTime, setSelectedTime] = useState('');
     const [selectedFormate, setSelectedFormate] = useState('');
-
     const [selectedStartDate, setSelectedStartDate] = useState(null);
     const [selectedEndDate, setSelectedEndDate] = useState(null);
     const [selectedId, setSelectedId] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
 
-    const userBookingData = () => {
-
-        let c = selectedDate.split("/");
-        var r = Math.floor(1000 + Math.random() * 9000);
-        let temp1 = c[2], temp2 = c[1], temp3 = c[0];
-        c[0] = temp2;
-        c[1] = temp1;
-        c[2] = temp3;
-        c = c.join("-");
-        const userSlot = {
-            bookingId: r,
-            hospitalCode: '123',
-            date: (c),
-            time: '9:00',
-            bookedtime: "02:40",
-            // phone: "9793405249",
 
 
-        }
-        console.log(userSlot);
+    useEffect(() => {
+        const backAction = () => {
+            console.log('You can not go Back');
 
-        axios.post('https://ehospi-new-api.herokuapp.com/api/hospitalBedBooking', userSlot)
-            .then(response => {
-                console.log('Booking Slot data is coming');
-                console.log(response.data);
-                if (response.data.status === "Booked bed sucessfully") {
-
-                    props.navigation.navigate('SemiPrivateRoom')
-                }
-                else if (response.data.status === "Profile already created") {
-                    alert("user is alredy register");
-
-                }
-                else {
-                    console.log("Error Occured")
-                }
-            })
-    }
+            return true;
+        };
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+        return () => backHandler.remove();
+    }, [])
     const renderItem = ({ item }) => {
         const backgroundColor = item.id === selectedId ? Colors.circleColor : Colors.lightblueC;
         const color = item.id === selectedId ? 'white' : 'black';
@@ -79,18 +47,6 @@ const Calender = (props) => {
             />
         );
     };
-
-
-    const onDateChange = (date, type) => {
-        //function to handle the date change
-        if (type === 'END_DATE') {
-            setSelectedEndDate(date);
-        } else {
-            setSelectedEndDate(null);
-            setSelectedStartDate(date);
-        }
-    };
-
     const Data1 = [
         {
             id: 1,
@@ -102,24 +58,19 @@ const Calender = (props) => {
         },
         {
             id: 3,
-            time: `09:00`, formate: `PM`
+            time: `09:00`, formate: `AM`
         },
         {
             id: 4,
-            time: `10:00`, formate: `PM`
+            time: `10:00`, formate: `AM`
         },
         {
             id: 5,
-            time: `11:00`, formate: `PM`
+            time: `11:00`, formate: `AM`
         },
-
-
     ]
     const Item = ({ item, onPress, backgroundColor, textColor }) => (
         <TouchableOpacity onPress={onPress} style={[styles.item, backgroundColor]}>
-
-            {/* <Circle time={item.time} formate={item.formate}  /> */}
-
             <Text style={{ fontWeight: 'bold', color: Colors.white, fontSize: hp('2%') }}>{item.time}</Text>
             <Text style={{ fontWeight: 'bold', color: Colors.white, fontSize: hp('2%') }}>{item.formate}</Text>
         </TouchableOpacity>
@@ -188,119 +139,20 @@ const Calender = (props) => {
             id: 19,
             time: `12:00`, formate: `PM`
         },
-
-
     ]
-    // const Item2 = ({ Item, onPress, backgroundColor, textColor }) => (
-    //     <TouchableOpacity onPress={onPress} style={[styles.item, backgroundColor]}>
-
-    //         {/* <Circle time={item.time} formate={item.formate}  /> */}
-
-    //         <Text>{Item.time}</Text>
-    //         <Text>{Item.formate}</Text>
-    //     </TouchableOpacity>
-    // );
     const saveDate = () => {
-        // Function to save the value in AsyncStorage
-
-        // To check the input not empty
         AsyncStorage.setItem('date', selectedDate);
-        // Setting a data to a AsyncStorage with respect to a key
-
-
         AsyncStorage.setItem('timing', selectedTime);
         AsyncStorage.setItem('formate', selectedFormate);
-
-        console.log('Async me timing', selectedTime)
-        console.log('Async me formate', selectedFormate)
-
-
-        alert('Data Saved');
-        // Alert to confirm
-
-
-
     };
-
     const DoubleFunc = () => {
-        userBookingData();
-        // props.navigation.navigate('SemiPrivateRoom')
-
+        // userBookingData();
+        props.navigation.navigate('SemiPrivateRoom')
     }
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.upperContainer}>
-
-                {/* <CalendarPicker
-                    horizontal={true}
-                    startFromMonday={true}
-                    allowRangeSelection={true}
-                    minDate={new Date(2018, 1, 1)}
-                    maxDate={new Date(2050, 6, 3)}
-                    weekdays={
-                        [
-                            'Mon',
-                            'Tue',
-                            'Wed',
-                            'Thur',
-                            'Fri',
-                            'Sat',
-                            'Sun'
-                        ]}
-                    months={[
-                        'January',
-                        'February',
-                        'March',
-                        'April',
-                        'May',
-                        'June',
-                        'July',
-                        'August',
-                        'September',
-                        'October',
-                        'November',
-                        'December',
-                    ]}
-                    previousTitle="<"
-                    previousTitleStyle={
-                        {
-                            fontSize: hp('3%'),
-                            color: Colors.white
-                        }
-                    }
-                    nextTitle=">"
-                    nextTitleStyle={
-                        {
-                            fontSize: hp('3%'),
-                            color: Colors.white
-                        }
-                    }
-                    //todayBackgroundColor="#e6ffe6"
-                    todayBackgroundColor="#4184f3"
-                    selectedDayColor="#ffffff"
-                    selectedDayTextColor="#000000"
-                    //selectedDayTextColor="#66f"
-                    scaleFactor={375}
-                    textStyle={{
-                        fontFamily: 'Cochin',
-                        color: '#000000',
-
-
-                    }}
-                    onDateChange={onDateChange}
-
-
-                    headerWrapperStyle={
-                        {
-                            backgroundColor: '#4184f3',
-                            height: hp('7%'),
-
-
-                        }
-
-                    }
-                /> */}
                 <DatePicker
                     options={{
                         backgroundColor: '#ffffff',
@@ -315,6 +167,7 @@ const Calender = (props) => {
                     selected={selectedDate}
                     mode="calendar"
                     minuteInterval={30}
+                    // minDate={moment().toDate()}
                     style={{ borderRadius: 10 }}
                     onSelectedChange={(date) => {
                         setSelectedDate(date)
@@ -322,20 +175,6 @@ const Calender = (props) => {
                     }
                     }
                 />
-                {/* <View style={styles.textStyle}>
-                    <Text style={styles.textStyle}>
-                        Selected Start Date :
-                    </Text>
-                    <Text style={styles.textStyle}>
-                        {selectedStartDate ? selectedStartDate.toString() : ''}
-                    </Text>
-                    <Text style={styles.textStyle}>
-                        Selected End Date :
-                    </Text>
-                    <Text style={styles.textStyle}>
-                        {selectedEndDate ? selectedEndDate.toString() : ''}
-                    </Text>
-                </View> */}
             </View>
             <View style={styles.lowerContainer}>
                 <Text style={{ padding: wp('4%'), fontWeight: 'bold', fontSize: hp('2.5%') }}>Available Time</Text>

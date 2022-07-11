@@ -44,19 +44,7 @@ const DeluxeRooms = (props) => {
                     }
                 />
             </View>
-
-
-
-
-
-
-
-
-
-
-
         </View>
-
     )
 }
 
@@ -76,6 +64,3 @@ const styles = StyleSheet.create({
     }
 
 })
-
- //backgroundColor: Colors.grayShade,
- //backgroundColor: 'red' 
